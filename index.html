@@ -253,6 +253,9 @@
         let timerInterval = null;
         let isPlaying = false;
         let currentTargetKey = "";
+        
+        // 新增：紀錄當前圖片的錯誤次數
+        let currentErrorCount = 0; 
 
         function startGame(categoryId) {
             const category = categoryMap[categoryId];
@@ -318,6 +321,9 @@
             imgElement.src = `PIC/${randomItem.folder}/${randomItem.key} (${randomItem.index}).png`;
             
             currentTargetKey = randomItem.key;
+            
+            // 每次換新圖片，將錯誤次數歸零
+            currentErrorCount = 0;
         }
 
         function updateTimerUI() {
@@ -350,8 +356,17 @@
                     nextImage(); 
                 } else {
                     currentScore -= 2;
-                    feedbackElement.innerText = "✗ 錯誤 (-2)";
-                    feedbackElement.className = "feedback wrong";
+                    currentErrorCount += 1; // 增加錯誤次數
+
+                    // 檢查是否已經錯了 3 次
+                    if (currentErrorCount >= 3) {
+                        feedbackElement.innerText = "✗ 錯滿 3 次，自動跳過 (-2)";
+                        feedbackElement.className = "feedback wrong";
+                        nextImage(); // 強制換下一張
+                    } else {
+                        feedbackElement.innerText = `✗ 錯誤 (-2) (已錯 ${currentErrorCount}/3 次)`;
+                        feedbackElement.className = "feedback wrong";
+                    }
                 }
                 
                 document.getElementById('score').innerText = currentScore;
