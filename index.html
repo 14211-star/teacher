@@ -63,8 +63,6 @@
             gap: 15px; margin-top: 30px;
         }
 
-        .button-grid .btn-full { grid-column: span 2; background-color: #8e44ad; }
-
         .btn {
             padding: 15px 10px; font-size: 18px; font-weight: bold;
             color: white; background-color: var(--primary-color);
@@ -96,10 +94,20 @@
             0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
         }
 
+        /* 圖片顯示區 */
         #image-display {
             width: 100%; height: 350px; object-fit: contain;
             border: 3px dashed #bdc3c7; border-radius: 12px;
             margin-bottom: 15px; background-color: #fafafa;
+        }
+
+        /* 倉頡字根(純文字)顯示區 */
+        #char-display {
+            width: 100%; height: 350px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 160px; font-weight: bold; color: #2c3e50;
+            border: 3px dashed #bdc3c7; border-radius: 12px;
+            margin-bottom: 15px; background-color: #e8f6f3;
         }
 
         .feedback { height: 35px; font-size: 26px; font-weight: bold; margin-bottom: 10px; }
@@ -131,13 +139,14 @@
             </div>
 
             <div class="button-grid">
+                <button class="btn" style="background-color: #16a085;" onclick="startGame('cangjie')">倉頡碼字根</button>
                 <button class="btn" onclick="startGame('philosophy')">哲理類 (A-G)</button>
                 <button class="btn" onclick="startGame('strokes')">筆劃類 (H-N)</button>
                 <button class="btn" onclick="startGame('body')">人身類 (O-R)</button>
                 <button class="btn" onclick="startGame('fonts')">字型類 (S-Y)</button>
                 <button class="btn" style="background-color: #d35400;" onclick="startGame('ph_st')">哲理+筆劃類 (A-N)</button>
                 <button class="btn" style="background-color: #d35400;" onclick="startGame('bo_fo')">人身+字型類 (O-Y)</button>
-                <button class="btn btn-full" onclick="startGame('all')">全輔助 (A-Z)</button>
+                <button class="btn" style="background-color: #8e44ad;" onclick="startGame('all')">全輔助 (A-Z)</button>
             </div>
         </div>
 
@@ -150,10 +159,11 @@
                 <div>分數: <span id="score">0</span></div>
             </div>
 
+            <div id="char-display" class="hidden"></div>
             <img id="image-display" src="" alt="圖片載入中...">
             
             <div id="feedback" class="feedback"></div>
-            <div class="hint-text" id="hint-text">請輸入圖片對應的英文字母</div>
+            <div class="hint-text" id="hint-text">請輸入對應的英文字母</div>
 
             <button class="btn btn-return" onclick="returnToMenu()">🔙 返回主選單</button>
         </div>
@@ -172,6 +182,18 @@
             's': 21, 't': 22, 'u': 18, 'v': 20, 'w': 18, 'x': 1, 'y': 21, 'z': 1
         };
 
+        // 建立倉頡字根與按鍵的對應表 (共 24 個)
+        const cangjieMap = [
+            { char: '日', key: 'a' }, { char: '月', key: 'b' }, { char: '金', key: 'c' },
+            { char: '木', key: 'd' }, { char: '水', key: 'e' }, { char: '火', key: 'f' },
+            { char: '土', key: 'g' }, { char: '竹', key: 'h' }, { char: '戈', key: 'i' },
+            { char: '十', key: 'j' }, { char: '大', key: 'k' }, { char: '中', key: 'l' },
+            { char: '一', key: 'm' }, { char: '弓', key: 'n' }, { char: '人', key: 'o' },
+            { char: '心', key: 'p' }, { char: '手', key: 'q' }, { char: '口', key: 'r' },
+            { char: '尸', key: 's' }, { char: '廿', key: 't' }, { char: '山', key: 'u' },
+            { char: '女', key: 'v' }, { char: '田', key: 'w' }, { char: '卜', key: 'y' }
+        ];
+
         function getLetters(startChar, endChar) {
             let result = [];
             for (let i = startChar.charCodeAt(0); i <= endChar.charCodeAt(0); i++) {
@@ -188,7 +210,9 @@
             return '';
         }
 
+        // 增加一個 isTextMode 標記，用來區分是顯示文字還是圖片
         const categoryMap = {
+            'cangjie':    { title: '倉頡碼字根', isTextMode: true },
             'philosophy': { title: '哲理類 (A-G)',     letters: getLetters('a', 'g') },
             'strokes':    { title: '筆劃類 (H-N)',     letters: getLetters('h', 'n') },
             'body':       { title: '人身類 (O-R)',     letters: getLetters('o', 'r') },
@@ -205,23 +229,40 @@
         let isPlaying = false;
         let currentTargetKey = "";
         let currentErrorCount = 0; 
+        let currentModeIsText = false; // 紀錄當前是否為文字模式
         const mobileInput = document.getElementById('mobile-input');
 
         function startGame(categoryId) {
             const category = categoryMap[categoryId];
-            const currentValidLetters = category.letters;
-            
+            currentModeIsText = category.isTextMode === true;
             currentImageList = [];
-            currentValidLetters.forEach(letter => {
-                const limit = counts[letter];
-                const folder = getFolderName(letter); 
-                for (let i = 1; i <= limit; i++) {
-                    currentImageList.push({ key: letter, index: i, folder: folder });
-                }
-            });
+
+            if (currentModeIsText) {
+                // 倉頡字根模式
+                currentImageList = [...cangjieMap];
+                document.getElementById('hint-text').innerText = `請輸入上方字根對應的英文字母`;
+                document.getElementById('image-display').classList.add('hidden');
+                document.getElementById('char-display').classList.remove('hidden');
+            } else {
+                // 原有的圖片模式
+                const currentValidLetters = category.letters;
+                currentValidLetters.forEach(letter => {
+                    const limit = counts[letter];
+                    const folder = getFolderName(letter); 
+                    for (let i = 1; i <= limit; i++) {
+                        currentImageList.push({ key: letter, index: i, folder: folder });
+                    }
+                });
+                
+                const hintStart = currentValidLetters[0].toUpperCase();
+                const hintEnd = currentValidLetters[currentValidLetters.length - 1].toUpperCase();
+                document.getElementById('hint-text').innerText = `請輸入圖片對應的英文字母 (範圍：${hintStart} - ${hintEnd})`;
+                document.getElementById('char-display').classList.add('hidden');
+                document.getElementById('image-display').classList.remove('hidden');
+            }
 
             if (currentImageList.length === 0) {
-                alert("找不到對應的圖片設定！");
+                alert("找不到對應的題目設定！");
                 return;
             }
 
@@ -232,16 +273,11 @@
             document.getElementById('category-title').innerText = category.title;
             document.getElementById('score').innerText = currentScore;
             document.getElementById('feedback').innerText = "";
-            
-            const hintStart = currentValidLetters[0].toUpperCase();
-            const hintEnd = currentValidLetters[currentValidLetters.length - 1].toUpperCase();
-            document.getElementById('hint-text').innerText = `請輸入圖片對應的英文字母 (範圍：${hintStart} - ${hintEnd})`;
             document.getElementById('timer').className = ""; 
             
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
 
-            // 遊戲開始時，強制讓隱形輸入框獲得焦點，叫出鍵盤
             mobileInput.value = '';
             mobileInput.focus();
 
@@ -258,10 +294,18 @@
         function nextImage() {
             if (!isPlaying || currentImageList.length === 0) return;
             const randomItem = currentImageList[Math.floor(Math.random() * currentImageList.length)];
-            const imgElement = document.getElementById('image-display');
-            imgElement.onerror = null; 
-            imgElement.src = `PIC/${randomItem.folder}/${randomItem.key} (${randomItem.index}).png`;
-            currentTargetKey = randomItem.key;
+            
+            if (currentModeIsText) {
+                // 顯示中文字根
+                document.getElementById('char-display').innerText = randomItem.char;
+                currentTargetKey = randomItem.key;
+            } else {
+                // 顯示圖片
+                const imgElement = document.getElementById('image-display');
+                imgElement.onerror = null; 
+                imgElement.src = `PIC/${randomItem.folder}/${randomItem.key} (${randomItem.index}).png`;
+                currentTargetKey = randomItem.key;
+            }
             currentErrorCount = 0;
         }
 
@@ -274,7 +318,6 @@
             else timerElement.classList.remove('timer-red');
         }
 
-        // 將檢查按鍵的邏輯獨立出來
         function processInput(keyPressed) {
             const feedbackElement = document.getElementById('feedback');
             
@@ -301,7 +344,6 @@
         // 1. 支援實體鍵盤 (桌機/筆電)
         window.addEventListener('keydown', (event) => {
             if (!isPlaying || event.repeat) return;
-            // 如果焦點在我們的手機輸入框上，交由 input 事件處理，避免重複扣分
             if (event.target.id === 'mobile-input') return;
 
             const keyPressed = event.key.toLowerCase();
@@ -310,20 +352,26 @@
             }
         });
 
+        // ==========================================
+        // 修復：防止隱藏輸入框長按連發導致連續扣分
+        // ==========================================
+        mobileInput.addEventListener('keydown', (event) => {
+            if (event.repeat) {
+                event.preventDefault(); // 攔截系統的重複按鍵事件
+            }
+        });
+
         // 2. 支援虛擬鍵盤 (手機/平板)
         mobileInput.addEventListener('input', (event) => {
             if (!isPlaying) return;
-            
-            // 抓取剛輸入的字母 (event.data 會包含剛打進去的字)
             const keyPressed = event.data ? event.data.toLowerCase() : "";
-            mobileInput.value = ''; // 讀取完馬上清空，確保輸入框永遠乾淨
+            mobileInput.value = ''; 
             
             if (keyPressed && /^[a-z]$/.test(keyPressed)) {
                 processInput(keyPressed);
             }
         });
 
-        // 確保學生如果誤觸螢幕其他地方導致鍵盤縮下去，點擊遊戲畫面任一處就能重新叫出鍵盤
         document.getElementById('game-screen').addEventListener('click', () => {
             if (isPlaying) {
                 mobileInput.focus();
@@ -333,7 +381,7 @@
         function endGame() {
             isPlaying = false;
             clearInterval(timerInterval);
-            mobileInput.blur(); // 遊戲結束收起鍵盤
+            mobileInput.blur(); 
             alert(`時間到！\n\n您的最終得分為：${currentScore} 分`);
             returnToMenu();
         }
