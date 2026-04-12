@@ -427,6 +427,7 @@
         // ==========================================
         const LEADERBOARD_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8k9zHam8zzhz4HyZeg69R2WlOYNW9zmGGV0Thr9JE47QhtYoMvA2pPRHtIFTUahgMGQ/exec";
         const TEST_SCORE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHo2Y18VkjCziSZ5P8Wv5O8Tt70tAKLY0lqYarj-GczZqIvOqeB5URhr9Ef899ma1O/exec";
+        const APP_SCRIPT_PLACEHOLDER = "在此貼上您的_Google_Apps_Script_網址";
         // ==========================================
 
         const counts = {
@@ -521,7 +522,24 @@
                 body: formData
             });
 
-            return response.json();
+            const rawText = await response.text();
+
+            let result;
+            try {
+                result = JSON.parse(rawText);
+            } catch (error) {
+                throw new Error(`伺服器沒有回傳 JSON：${rawText.slice(0, 120)}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(result.message || `HTTP ${response.status}`);
+            }
+
+            if (result.result !== "success") {
+                throw new Error(result.message || "伺服器回傳失敗");
+            }
+
+            return result;
         }
 
         // ================= 登入驗證 =================
@@ -777,18 +795,17 @@
                     const result = await postToAppScript(TEST_SCORE_APP_SCRIPT_URL, {
                         studentId,
                         score: currentScore,
+                        mode: categoryMap[currentModeId].title,
                         time: selectedTime
                     });
 
                     if (result.result === "success") {
                         saveStatus.innerText = "✅ 測驗成績已成功上傳至 Google 試算表！";
                         saveStatus.style.color = "var(--success-color)";
-                    } else {
-                        throw new Error("伺服器回傳失敗");
                     }
                 } catch (e) {
                     console.error("測驗成績儲存失敗", e);
-                    saveStatus.innerText = "⚠️ 測驗成績上傳失敗，請檢查網路連線或網址設定。";
+                    saveStatus.innerText = `⚠️ 測驗成績上傳失敗：${e.message}`;
                     saveStatus.style.color = "var(--danger-color)";
                 }
                 return;
@@ -815,12 +832,10 @@
                     if(result.result === "success") {
                         saveStatus.innerText = "✅ 成績已成功上傳至龍虎榜！";
                         saveStatus.style.color = "var(--success-color)";
-                    } else {
-                        throw new Error("伺服器回傳失敗");
                     }
                 } catch (e) {
                     console.error("儲存失敗", e);
-                    saveStatus.innerText = "⚠️ 上傳失敗，請檢查網路連線或網址設定。";
+                    saveStatus.innerText = `⚠️ 上傳失敗：${e.message}`;
                     saveStatus.style.color = "var(--danger-color)";
                 }
             } else {
