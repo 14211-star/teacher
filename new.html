@@ -778,6 +778,7 @@
                     const result = await postToAppScript(TEST_SCORE_APP_SCRIPT_URL, {
                         studentId,
                         score: currentScore,
+                        mode: categoryMap[currentModeId].title,
                         time: selectedTime
                     });
 
