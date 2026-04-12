@@ -426,8 +426,7 @@
     <script>
         // ==========================================
         const LEADERBOARD_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8k9zHam8zzhz4HyZeg69R2WlOYNW9zmGGV0Thr9JE47QhtYoMvA2pPRHtIFTUahgMGQ/exec";
-        const TEST_SCORE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Lt6AAy620O51VzyAfggv0vjDB-zY-kgoO8T9wvBezPX8oFpg2X2ry4vKwQs7jE28/exec";
-        const APP_SCRIPT_PLACEHOLDER = "在此貼上您的_Google_Apps_Script_網址";
+        const TEST_SCORE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHo2Y18VkjCziSZ5P8Wv5O8Tt70tAKLY0lqYarj-GczZqIvOqeB5URhr9Ef899ma1O/exec";
         // ==========================================
 
         const counts = {
@@ -778,7 +777,6 @@
                     const result = await postToAppScript(TEST_SCORE_APP_SCRIPT_URL, {
                         studentId,
                         score: currentScore,
-                        mode: categoryMap[currentModeId].title,
                         time: selectedTime
                     });
 
