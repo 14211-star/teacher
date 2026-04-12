@@ -202,8 +202,8 @@
         <div class="modal-content">
             <h1>👋 歡迎來到打字系統</h1>
             <p style="font-size: 18px; color: var(--text-main); font-weight: bold;">請先輸入您的專屬學號</p>
-            <input type="text" id="student-id-input" class="login-input" placeholder="例如: P5A36" maxlength="5">
-            <div class="login-hint">格式說明: P + 年級(1-6) + 班別(A-F) + 學號(1-40)</div>
+            <input type="text" id="student-id-input" class="login-input" placeholder="例如: P6A02" maxlength="5">
+            <div class="login-hint">格式說明: P + 年級(1-6) + 班別(A-F) + 學號(01-40)</div>
             <div class="error-message" id="login-error"></div>
             <button class="btn-primary" onclick="verifyLogin()">進入系統</button>
         </div>
@@ -217,14 +217,15 @@
             
             <div class="leaderboard-controls">
                 <select id="lb-mode-select" onchange="loadLeaderboard()">
-                    <option value="cangjie">倉頡碼字根</option>
-                    <option value="philosophy">哲理類 (A-G)</option>
-                    <option value="strokes">筆劃類 (H-N)</option>
-                    <option value="body">人身類 (O-R)</option>
-                    <option value="fonts">字型類 (S-Y)</option>
-                    <option value="ph_st">哲理+筆劃 (A-N)</option>
-                    <option value="bo_fo">人身+字型 (O-Y)</option>
-                    <option value="all">全輔助 (A-Z)</option>
+                    <!-- 選項 value 全部改成中文 -->
+                    <option value="倉頡碼字根">倉頡碼字根</option>
+                    <option value="哲理類 (A-G)">哲理類 (A-G)</option>
+                    <option value="筆劃類 (H-N)">筆劃類 (H-N)</option>
+                    <option value="人身類 (O-R)">人身類 (O-R)</option>
+                    <option value="字型類 (S-Y)">字型類 (S-Y)</option>
+                    <option value="哲理+筆劃 (A-N)">哲理+筆劃 (A-N)</option>
+                    <option value="人身+字型 (O-Y)">人身+字型 (O-Y)</option>
+                    <option value="全輔助 (A-Z)">全輔助 (A-Z)</option>
                 </select>
                 <select id="lb-time-select" onchange="loadLeaderboard()">
                     <option value="180">3 分鐘</option>
@@ -339,8 +340,8 @@
             const input = document.getElementById('student-id-input').value.trim().toUpperCase();
             const errorMsg = document.getElementById('login-error');
             
-            // 嚴格檢查格式: P(1-6)(A-F)(1-40)
-            const regex = /^P[1-6][A-F]([1-9]|[1-3][0-9]|40)$/i;
+            // 嚴格檢查格式: P(1-6)(A-F)(01-40)
+            const regex = /^P[1-6][A-F](0[1-9]|[1-3][0-9]|40)$/i;
             
             if (regex.test(input)) {
                 studentId = input;
@@ -349,7 +350,7 @@
                 document.getElementById('login-modal').classList.remove('active');
                 errorMsg.innerText = "";
             } else {
-                errorMsg.innerText = "格式錯誤！請輸入正確格式，如：P5A36";
+                errorMsg.innerText = "格式錯誤！請輸入正確格式，如：P6A02";
             }
         };
 
@@ -501,7 +502,8 @@
                 const formData = new URLSearchParams();
                 formData.append('studentId', studentId);
                 formData.append('score', currentScore);
-                formData.append('mode', currentModeId);
+                // 改成上傳中文的標題（例如 "哲理類 (A-G)" 而不是 "philosophy"）
+                formData.append('mode', categoryMap[currentModeId].title);
                 formData.append('time', selectedTime);
 
                 try {
@@ -561,8 +563,8 @@
             const targetTime = parseInt(document.getElementById('lb-time-select').value);
 
             try {
-                // 請求 Google 表格回傳對應模式和時間的資料
-                const fetchUrl = `${GOOGLE_APP_SCRIPT_URL}?mode=${targetMode}&time=${targetTime}`;
+                // 加入 encodeURIComponent 確保中文或加號「+」傳送時不會發生亂碼
+                const fetchUrl = `${GOOGLE_APP_SCRIPT_URL}?mode=${encodeURIComponent(targetMode)}&time=${targetTime}`;
                 const response = await fetch(fetchUrl);
                 const sortedScores = await response.json();
 
