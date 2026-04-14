@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字練習系統 - 勞校中學附屬小學</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap');
+
+        :root {
+            --bg-base: #e2ede1;
+            --bg-dots: #cadac8;
+            --card-bg: #fffefa;
+            --text-main: #5c4d43;
+            --text-light: #8c7b70;
+            --success-color: #72b076;
+            --danger-color: #e57373;
+            --border-color: #d1d8cc;
+            --modal-overlay: rgba(92, 77, 67, 0.6);
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+        }
+
+        body {
+            font-family: 'Nunito', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: var(--bg-base);
+            background-image: radial-gradient(var(--bg-dots) 2px, transparent 2px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(92, 77, 67, 0.1);
+            padding: 30px 40px;
+            width: 90%;
+            max-width: 850px;
+            text-align: center;
+            border: 4px solid #ffffff;
+            position: relative;
+        }
+
+        .hidden { display: none !important; }
+        .hidden-input { position: absolute; opacity: 0; top: -1000px; left: -1000px; }
+
+        h1 { 
+            margin-top: 0; font-size: 34px; font-weight: 800;
+            color: var(--text-main); letter-spacing: 2px;
+            margin-bottom: 20px; text-shadow: 2px 2px 0px rgba(202, 218, 200, 0.5);
+        }
+
+        .student-badge {
+            position: absolute; top: 20px; left: 20px; background: #fff;
+            padding: 8px 15px; border-radius: 20px; font-size: 16px;
+            font-weight: bold; color: var(--text-main); border: 2px dashed var(--border-color);
+            display: none; z-index: 10; align-items: center; gap: 10px; flex-wrap: wrap;
+            max-width: calc(100vw - 24px);
+        }
+        .student-badge-text { display: inline-flex; align-items: center; gap: 4px; }
+        .student-badge-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f4f6f3;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .btn-logout {
+            border: none; background: #e57373; color: #fff; border-radius: 50px;
+            padding: 6px 12px; font-size: 14px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+        }
+        .btn-logout:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
+        @media (max-width: 900px) {
+            .student-badge {
+                top: 8px;
+                left: 8px;
+                padding: 6px 10px;
+                font-size: 13px;
+                gap: 6px;
+            }
+            .student-badge-meta {
+                font-size: 12px;
+                padding: 3px 8px;
+            }
+            .btn-logout {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+        }
+
+        .controls-wrapper { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 15px auto 25px; flex-wrap: wrap; }
+        .settings-group { font-size: 18px; background: #f4f6f3; padding: 10px 20px; border-radius: 50px; display: inline-flex; align-items: center; font-weight: bold; color: var(--text-light); border: 2px dashed var(--border-color); }
+        select { padding: 6px 14px; font-size: 18px; border-radius: 50px; border: 2px solid var(--border-color); outline: none; margin-left: 10px; cursor: pointer; background-color: #fff; font-weight: bold; color: var(--text-main); transition: all 0.2s; }
+        select:focus { border-color: #a3b899; }
+
+        .btn-leaderboard {
+            background-color: #ffd6a5; color: var(--text-main); padding: 10px 20px;
+            font-size: 18px; font-weight: 800; border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0px rgba(92, 77, 67, 0.15);
+            transition: all 0.1s ease; display: flex; align-items: center; gap: 8px; height: 100%;
+        }
+        .btn-leaderboard:active { transform: translateY(4px); box-shadow: 0 1px 0px rgba(92, 77, 67, 0.15); }
+        .btn-teacher-admin { background-color: #bde0fe; }
+
+        .button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
+        .btn { padding: 15px 10px; font-size: 18px; font-weight: 800; color: var(--text-main); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 20px; cursor: pointer; transition: all 0.1s ease; box-shadow: 0 6px 0px rgba(92, 77, 67, 0.15), 0 10px 15px rgba(0,0,0,0.05); position: relative; }
+        .btn:active { transform: translateY(6px); box-shadow: 0 0px 0px rgba(92, 77, 67, 0.15), 0 2px 5px rgba(0,0,0,0.05); }
+
+        .btn-cangjie { background-color: #b5e48c; }
+        .btn-philosophy { background-color: #a2d2ff; }
+        .btn-strokes { background-color: #cdb4db; }
+        .btn-body { background-color: #ffc8dd; }
+        .btn-fonts { background-color: #ffafcc; }
+        .btn-ph_st { background-color: #fcf6bd; }
+        .btn-bo_fo { background-color: #ffd6a5; }
+        .btn-all { background-color: #ffadad; }
+        .btn-english { background-color: #9bf6ff; }
+        .btn-chinese { background-color: #b8f2e6; }
+        
+        .btn-return { background-color: #e0e6dd; border-color: transparent; color: var(--text-light); margin-top: 15px; padding: 12px 30px; width: auto; border-radius: 50px; box-shadow: 0 5px 0px rgba(92, 77, 67, 0.1); }
+        .btn-return:active { transform: translateY(5px); box-shadow: 0 0px 0px rgba(92, 77, 67, 0.1); }
+
+        .status-bar { display: flex; justify-content: space-between; align-items: center; background: #f4f6f3; padding: 10px 25px; border-radius: 20px; margin-bottom: 15px; font-size: 20px; font-weight: 800; color: var(--text-main); border: 2px dashed var(--border-color); }
+        .status-box { background: #fff; padding: 5px 18px; border-radius: 12px; box-shadow: 0 2px 0px rgba(92, 77, 67, 0.05); }
+        .timer-red { color: var(--danger-color); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* 高度調整為400px，進一步增加下落距離，降低難度 */
+        .display-card { width: 100%; height: 400px; border-radius: 24px; margin-bottom: 10px; background-color: #fcfdfe; border: 4px solid #eef1ec; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        #image-display { object-fit: contain; padding: 15px; box-sizing: border-box; }
+        #char-display { display: flex; justify-content: center; align-items: center; font-size: 140px; font-weight: 800; color: var(--text-main); background-image: linear-gradient(#f4f6f3 2px, transparent 2px); background-size: 100% 40px; background-position: 0 20px; }
+        #char-display.custom-text-mode {
+            display: block;
+            font-size: 40px;
+            line-height: 1.7;
+            text-align: left;
+            padding: 24px 28px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-y: auto;
+        }
+        
+        #falling-container { position: relative; overflow: hidden; background-image: linear-gradient(#f4f6f3 2px, transparent 2px); background-size: 100% 40px; }
+        .falling-letter { position: absolute; font-size: 80px; font-weight: 800; color: var(--text-main); text-shadow: 3px 3px 0px rgba(202, 218, 200, 0.6); width: 80px; height: 80px; text-align: center; line-height: 80px; transform: translateX(-50%); }
+
+        /* ======== 虛擬鍵盤與動態雙手樣式 (縮小40%版) ======== */
+        .keyboard-container {
+            display: flex; flex-direction: column; gap: 3px; align-items: center; 
+            background: #f4f6f3; padding: 8px; border-radius: 12px; 
+            border: 2px dashed var(--border-color); margin-bottom: 5px;
+        }
+        .key-row { display: flex; gap: 3px; justify-content: center; }
+        .key {
+            width: 16px; height: 16px; border-radius: 4px; display: flex; 
+            justify-content: center; align-items: center; font-weight: 900; 
+            font-size: 8px; color: var(--text-main); box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+            transition: all 0.15s ease; border: 1px solid rgba(255,255,255,0.6);
+        }
+        
+        /* 指法對應顏色 (馬卡龍色系) */
+        .lp { background-color: #ffadad; } /* 粉紅-左小指 */
+        .lr { background-color: #ffd6a5; } /* 橙色-左無名指 */
+        .lm { background-color: #fdffb6; } /* 黃色-左中指 */
+        .li { background-color: #caffbf; } /* 綠色-左食指 */
+        .ri { background-color: #9bf6ff; } /* 淺藍-右食指 */
+        .rm { background-color: #a0c4ff; } /* 藍色-右中指 */
+        .rr { background-color: #bdb2ff; } /* 紫色-右無名指 */
+        .rp { background-color: #ffc6ff; } /* 淺紫-右小指 */
+        .thumb-color { background-color: #e2ede1; } /* 拇指-中性色 */
+        
+        /* 教學亮起特效 (鍵盤) */
+        .key.active-key {
+            transform: scale(1.15) translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2), 0 0 0 1px #fff, 0 0 0 2px var(--danger-color);
+            z-index: 10; color: #fff; background-color: var(--danger-color) !important;
+        }
+
+        /* 動態雙手圖形 (縮小40%版) */
+        .hands-container {
+            display: flex; justify-content: center; gap: 30px; margin-top: 15px;
+        }
+        .hand {
+            position: relative; width: 44px; height: 21px; background: #fff;
+            border-radius: 8px 8px 18px 18px; border: 1px solid #d1d8cc;
+            box-shadow: inset -1px -2px 3px rgba(0,0,0,0.03), 0 2px 0 rgba(0,0,0,0.05);
+        }
+        .fingers {
+            display: flex; align-items: flex-end; gap: 2px; position: absolute;
+            bottom: 19px; left: 50%; transform: translateX(-50%);
+        }
+        .finger {
+            width: 8px; border-radius: 5px 5px 0 0; border: 1px solid #d1d8cc;
+            border-bottom: none; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: bottom center; box-shadow: inset -1px 0 2px rgba(0,0,0,0.05);
+        }
+        
+        /* 手指高度比例 */
+        .finger.pinky { height: 13px; }
+        .finger.ring { height: 19px; }
+        .finger.middle { height: 23px; }
+        .finger.index { height: 19px; }
+        
+        /* 拇指特化 */
+        .finger.thumb {
+            position: absolute; width: 10px; height: 16px; border-radius: 5px 5px 0 0;
+            border: 1px solid #d1d8cc; bottom: 2px; box-shadow: inset -1px 0 2px rgba(0,0,0,0.05);
+        }
+        .left-hand .finger.thumb { right: -8px; transform: rotate(50deg); }
+        .right-hand .finger.thumb { left: -8px; transform: rotate(-50deg); }
+
+        /* 教學亮起特效 (手指) */
+        .finger.active-finger {
+            transform: translateY(-4px) scale(1.05);
+            border-color: var(--danger-color); z-index: 10;
+            background-color: var(--danger-color) !important;
+            box-shadow: 0 2px 5px rgba(229, 115, 115, 0.4);
+        }
+        .left-hand .finger.thumb.active-finger { transform: rotate(50deg) translateY(-4px) scale(1.05); }
+        .right-hand .finger.thumb.active-finger { transform: rotate(-50deg) translateY(-4px) scale(1.05); }
+        /* ========================================= */
+
+        .feedback { height: 35px; font-size: 24px; font-weight: 800; margin-bottom: 5px; letter-spacing: 1px; }
+        .feedback.correct { color: var(--success-color); animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .feedback.wrong { color: var(--danger-color); animation: shake 0.4s ease; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+        .hint-text { color: var(--text-light); font-size: 16px; margin-bottom: 10px; font-weight: bold; background: #f4f6f3; display: inline-block; padding: 6px 20px; border-radius: 50px; border: 2px solid #fff; }
+        .chinese-ime-input {
+            width: 320px;
+            max-width: 82%;
+            padding: 10px 14px;
+            margin: 8px 0 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 22px;
+            text-align: center;
+            outline: none;
+            color: var(--text-main);
+            background: #fff;
+            font-weight: bold;
+        }
+        .chinese-ime-input:focus { border-color: #a3b899; }
+        
+        .author-signature { 
+            position: fixed; bottom: 15px; right: 20px; text-align: right; 
+            font-size: 10px; font-weight: 800; color: var(--text-light); letter-spacing: 1px; 
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); 
+            padding: 6px 12px; border-radius: 10px; box-shadow: 0 2px 10px rgba(92, 77, 67, 0.05); 
+            line-height: 1.4; z-index: 100; border: 2px solid #fff; 
+        }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; backdrop-filter: blur(5px); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--card-bg); border-radius: 30px; padding: 40px; width: 90%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; border: 4px solid #fff; transform: translateY(20px); transition: all 0.3s ease; position: relative; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+
+        .login-input { width: 80%; padding: 15px; font-size: 24px; text-align: center; border: 3px solid var(--border-color); border-radius: 15px; margin: 20px 0; color: var(--text-main); font-weight: bold; text-transform: uppercase; outline: none; }
+        .login-input:focus { border-color: #a3b899; }
+        .login-hint { font-size: 14px; color: var(--text-light); margin-bottom: 20px; }
+        .login-mode-switch { display: flex; justify-content: center; gap: 10px; margin: 20px 0 10px; flex-wrap: wrap; }
+        .login-mode-btn { background: #f4f6f3; color: var(--text-main); border: 2px solid var(--border-color); padding: 10px 20px; font-size: 18px; border-radius: 50px; cursor: pointer; font-weight: 800; }
+        .login-mode-btn.active { background: #a3b899; color: #fff; border-color: #a3b899; }
+        .login-fields { display: flex; flex-direction: column; align-items: center; }
+        .btn-primary { background-color: #a3b899; color: white; border: none; padding: 15px 40px; font-size: 20px; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 5px 0px rgba(0,0,0,0.1); transition: all 0.1s; }
+        .btn-primary:active { transform: translateY(4px); box-shadow: 0 1px 0px rgba(0,0,0,0.1); }
+        .error-message { color: var(--danger-color); font-weight: bold; margin-bottom: 15px; min-height: 24px; }
+
+        .leaderboard-modal { max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; }
+        .leaderboard-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .table-container { overflow-y: auto; max-height: 50vh; border-radius: 15px; border: 2px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background-color: #f4f6f3; padding: 15px; color: var(--text-light); position: sticky; top: 0; z-index: 2; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 18px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #fcfdfc; }
+        .rank-1 td:first-child { color: var(--gold); font-size: 24px; }
+        .rank-2 td:first-child { color: var(--silver); font-size: 22px; }
+        .rank-3 td:first-child { color: var(--bronze); font-size: 20px; }
+        .btn-close { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; color: var(--text-light); cursor: pointer; font-weight: bold; padding: 0; line-height: 1; }
+        .btn-close:hover { color: var(--danger-color); }
+        .score-highlight { font-size: 64px; color: var(--success-color); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 0px rgba(114, 176, 118, 0.2); }
+        .teacher-admin-modal { max-width: 760px; }
+        .teacher-toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+        .teacher-toolbar select { margin-left: 0; }
+        .teacher-status { font-size: 14px; font-weight: bold; color: var(--text-light); margin: 8px 0 12px; min-height: 20px; }
+        .teacher-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .teacher-page-info { font-size: 14px; font-weight: bold; color: var(--text-light); min-width: 190px; text-align: center; }
+        .teacher-actions { margin-top: 14px; padding: 14px; border-radius: 14px; background: #f4f6f3; border: 2px dashed var(--border-color); }
+        .teacher-actions h3 { margin: 0 0 10px; font-size: 20px; }
+        .teacher-actions .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
+        .teacher-actions input { width: 200px; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border-color); font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .btn-danger { background-color: #ef9a9a; color: #fff; border: none; padding: 12px 18px; font-size: 16px; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 4px 0px rgba(0,0,0,0.1); }
+        .btn-danger:active { transform: translateY(3px); box-shadow: 0 1px 0px rgba(0,0,0,0.1); }
+        .chinese-menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; justify-items: center; }
+        .chinese-menu-card {
+            background: #f4f6f3; border: 2px dashed var(--border-color); border-radius: 24px;
+            padding: 24px 20px; margin-top: 10px;
+        }
+        .chinese-menu-desc { color: var(--text-light); font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+        .chinese-menu-grid .btn {
+            width: auto;
+            min-width: 230px;
+            max-width: none;
+            justify-self: center;
+            padding: 12px 32px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="student-badge" id="student-badge">
+        <span class="student-badge-text">🧑‍🎓 學號: <span id="display-student-id">未登入</span></span>
+        <span class="student-badge-meta">模式: <span id="display-practice-mode">練習模式</span> | 時間: <span id="display-practice-time">3分鐘</span></span>
+        <button class="btn-logout" onclick="logoutUser()">登出</button>
+    </div>
+
+    <div class="container">
+        <div id="menu-screen">
+            <h1>🌿 打字練習系統 🐾</h1>
+            
+            <div class="controls-wrapper">
+                <div class="settings-group">
+                    <label for="practice-mode-select">模式：</label>
+                    <select id="practice-mode-select">
+                        <option value="practice">練習模式</option>
+                        <option value="test">測驗模式</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label for="time-select">⏱️ 練習時間：</label>
+                    <select id="time-select">
+                        <option value="180">3 分鐘</option>
+                        <option value="300">5 分鐘</option>
+                    </select>
+                </div>
+                <button class="btn-leaderboard" onclick="openLeaderboard()">
+                    🏆 龍虎榜
+                </button>
+                <button class="btn-leaderboard btn-teacher-admin hidden" id="teacher-admin-btn" onclick="openTeacherAdmin()">
+                    🧑‍🏫 教師後台
+                </button>
+            </div>
+
+            <div class="button-grid">
+                <button class="btn btn-english" onclick="startGame('english')">英文打字 (A-Z)</button>
+                <button class="btn btn-cangjie" onclick="startGame('cangjie')">倉頡碼字根</button>
+                <button class="btn btn-philosophy" onclick="startGame('philosophy')">哲理類 (A-G)</button>
+                <button class="btn btn-strokes" onclick="startGame('strokes')">筆劃類 (H-N)</button>
+                <button class="btn btn-body" onclick="startGame('body')">人身類 (O-R)</button>
+                <button class="btn btn-fonts" onclick="startGame('fonts')">字型類 (S-Y)</button>
+                <button class="btn btn-ph_st" onclick="startGame('ph_st')">哲理+筆劃 (A-N)</button>
+                <button class="btn btn-bo_fo" onclick="startGame('bo_fo')">人身+字型 (O-Y)</button>
+                <button class="btn btn-all" onclick="startGame('all')">全輔助 (A-Z)</button>
+                <button class="btn btn-chinese" onclick="openChineseTypingMenu()">中文打字</button>
+            </div>
+        </div>
+
+        <div id="chinese-menu-screen" class="hidden">
+            <h1>🀄 中文打字</h1>
+            <div class="chinese-menu-card">
+                <div class="chinese-menu-desc">請選擇中文打字模式</div>
+                <div class="chinese-menu-grid">
+                    <button class="btn btn-cangjie" onclick="closeChineseTypingMenu(); startGame('chinese_twochar');">兩碼字</button>
+                    <button class="btn btn-fonts" onclick="selectChineseTypingMode('自訂打字')">自訂打字</button>
+                </div>
+            </div>
+            <button class="btn btn-return" onclick="closeChineseTypingMenu()">🔙 返回主選單</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <input type="text" id="mobile-input" class="hidden-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            
+            <div class="status-bar">
+                <div id="category-title" class="status-box">類別</div>
+                <div>倒數 <span id="timer" class="status-box">00:00</span></div>
+                <div>得分 <span id="score" class="status-box" style="color: #72b076;">0</span></div>
+            </div>
+
+            <div id="char-display" class="display-card hidden"></div>
+            <img id="image-display" class="display-card" src="" alt="圖片載入中...">
+            
+            <div id="falling-container" class="display-card hidden">
+                <div id="the-falling-letter" class="falling-letter">A</div>
+            </div>
+            
+            <!-- 新增：動態指法鍵位圖 + 雙手圖形 -->
+            <div id="keyboard-layout" class="keyboard-container hidden">
+                <!-- 鍵盤區 -->
+                <div class="key-row">
+                    <div class="key lp" id="key-q">Q</div>
+                    <div class="key lr" id="key-w">W</div>
+                    <div class="key lm" id="key-e">E</div>
+                    <div class="key li" id="key-r">R</div>
+                    <div class="key li" id="key-t">T</div>
+                    <div class="key ri" id="key-y">Y</div>
+                    <div class="key ri" id="key-u">U</div>
+                    <div class="key rm" id="key-i">I</div>
+                    <div class="key rr" id="key-o">O</div>
+                    <div class="key rp" id="key-p">P</div>
+                </div>
+                <div class="key-row">
+                    <div class="key lp" id="key-a">A</div>
+                    <div class="key lr" id="key-s">S</div>
+                    <div class="key lm" id="key-d">D</div>
+                    <div class="key li" id="key-f">F</div>
+                    <div class="key li" id="key-g">G</div>
+                    <div class="key ri" id="key-h">H</div>
+                    <div class="key ri" id="key-j">J</div>
+                    <div class="key rm" id="key-k">K</div>
+                    <div class="key rr" id="key-l">L</div>
+                </div>
+                <div class="key-row">
+                    <div class="key lp" id="key-z">Z</div>
+                    <div class="key lr" id="key-x">X</div>
+                    <div class="key lm" id="key-c">C</div>
+                    <div class="key li" id="key-v">V</div>
+                    <div class="key li" id="key-b">B</div>
+                    <div class="key ri" id="key-n">N</div>
+                    <div class="key ri" id="key-m">M</div>
+                </div>
+
+                <!-- 動態 3D 雙手區 (美化版) -->
+                <div class="hands-container">
+                    <!-- 左手 -->
+                    <div class="hand left-hand">
+                        <div class="fingers">
+                            <div class="finger pinky lp" id="finger-lp"></div>
+                            <div class="finger ring lr" id="finger-lr"></div>
+                            <div class="finger middle lm" id="finger-lm"></div>
+                            <div class="finger index li" id="finger-li"></div>
+                        </div>
+                        <div class="finger thumb thumb-color" id="finger-lt"></div>
+                    </div>
+                    <!-- 右手 -->
+                    <div class="hand right-hand">
+                        <div class="finger thumb thumb-color" id="finger-rt"></div>
+                        <div class="fingers">
+                            <div class="finger index ri" id="finger-ri"></div>
+                            <div class="finger middle rm" id="finger-rm"></div>
+                            <div class="finger ring rr" id="finger-rr"></div>
+                            <div class="finger pinky rp" id="finger-rp"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="feedback" class="feedback"></div>
+            <div class="hint-text" id="hint-text">請輸入對應的英文字母</div>
+            <input type="text" id="chinese-ime-input" class="chinese-ime-input hidden" placeholder="請在此輸入中文" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <br>
+            <button class="btn btn-return" onclick="returnToMenu()">🔙 結束並返回主選單</button>
+        </div>
+    </div>
+
+    <div class="author-signature">
+        勞校中學附屬小學<br>
+        作者: 賀老師
+    </div>
+
+    <!-- 1. 學生登入 Modal -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal-content">
+            <h1>👋 歡迎來到打字系統</h1>
+            <div class="login-mode-switch">
+                <button class="login-mode-btn active" id="student-login-tab" onclick="switchLoginMode('student')">學生登入</button>
+                <button class="login-mode-btn" id="teacher-login-tab" onclick="switchLoginMode('teacher')">老師登入</button>
+            </div>
+            <p style="font-size: 18px; color: var(--text-main); font-weight: bold;" id="login-title-text">請先輸入您的專屬學號</p>
+            <div class="login-fields" id="student-login-fields">
+                <input type="text" id="student-id-input" class="login-input" placeholder="例如: P6A02" maxlength="12">
+                <div class="login-hint">格式說明: P + 年級(1-6) + 班別(A-F) + 學號(01-40)</div>
+            </div>
+            <div class="login-fields hidden" id="teacher-login-fields">
+                <input type="text" id="teacher-username-input" class="login-input" placeholder="老師帳號" maxlength="20" style="text-transform:none;">
+                <input type="password" id="teacher-password-input" class="login-input" placeholder="老師密碼" maxlength="20" style="text-transform:none; margin-top: 0;">
+                <div class="login-hint">請輸入老師帳號及密碼</div>
+            </div>
+            <div class="error-message" id="login-error"></div>
+            <button class="btn-primary" onclick="verifyLogin()">進入系統</button>
+        </div>
+    </div>
+
+    <!-- 2. 龍虎榜 Modal -->
+    <div class="modal-overlay" id="leaderboard-modal">
+        <div class="modal-content leaderboard-modal">
+            <button class="btn-close" onclick="closeLeaderboard()">×</button>
+            <h1 style="margin-bottom: 10px;">🏆 勞校龍虎榜</h1>
+            
+            <div class="leaderboard-controls">
+                <select id="lb-mode-select" onchange="loadLeaderboard()">
+                    <option value="倉頡碼字根">倉頡碼字根</option>
+                    <option value="哲理類 (A-G)">哲理類 (A-G)</option>
+                    <option value="筆劃類 (H-N)">筆劃類 (H-N)</option>
+                    <option value="人身類 (O-R)">人身類 (O-R)</option>
+                    <option value="字型類 (S-Y)">字型類 (S-Y)</option>
+                    <option value="哲理+筆劃 (A-N)">哲理+筆劃 (A-N)</option>
+                    <option value="人身+字型 (O-Y)">人身+字型 (O-Y)</option>
+                    <option value="全輔助 (A-Z)">全輔助 (A-Z)</option>
+                    <option value="英文打字 (A-Z)">英文打字 (A-Z)</option>
+                    <option value="中文打字 - 兩碼字">中文打字 - 兩碼字</option>
+                    <option value="中文打字-自訂打字">中文打字-自訂打字</option>
+                </select>
+                <select id="lb-time-select" onchange="loadLeaderboard()">
+                    <option value="180">3 分鐘</option>
+                    <option value="300">5 分鐘</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th width="20%">排名</th>
+                            <th width="50%">學號</th>
+                            <th width="30%">最高分</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- 資料由 JS 動態生成 -->
+                    </tbody>
+                </table>
+                <div id="lb-loading" style="padding: 20px; font-weight: bold; color: var(--text-light);">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 教師後台 Modal -->
+    <div class="modal-overlay" id="teacher-admin-modal">
+        <div class="modal-content leaderboard-modal teacher-admin-modal">
+            <button class="btn-close" onclick="closeTeacherAdmin()">×</button>
+            <h1 style="margin-bottom: 10px;">🧑‍🏫 教師後台</h1>
+
+            <div class="teacher-toolbar">
+                <select id="teacher-dataset-select" onchange="loadTeacherDataset()">
+                    <option value="leaderboard">學生龍虎榜表單</option>
+                    <option value="test">學生成績表單</option>
+                </select>
+                <select id="teacher-mode-filter" onchange="applyTeacherFilters()">
+                    <option value="__ALL__">全部模式</option>
+                </select>
+                <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="loadTeacherDataset()">重新載入</button>
+                <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="downloadTeacherCsv()">下載 CSV</button>
+                <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="openTeacherSheet()">開啟試算表</button>
+                <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="triggerCustomTextUpload()">上傳自訂打字</button>
+                <input type="file" id="custom-text-upload" class="hidden" accept=".txt,text/plain">
+            </div>
+
+            <div id="teacher-admin-status" class="teacher-status"></div>
+            <div class="teacher-pagination">
+                <button class="btn-primary" id="teacher-page-prev" style="font-size:14px; padding: 8px 16px;" onclick="changeTeacherPage(-1)">上一頁</button>
+                <div id="teacher-page-info" class="teacher-page-info">第 1 / 1 頁，每頁 100 筆</div>
+                <button class="btn-primary" id="teacher-page-next" style="font-size:14px; padding: 8px 16px;" onclick="changeTeacherPage(1)">下一頁</button>
+            </div>
+
+            <div class="table-container">
+                <table id="teacher-admin-table">
+                    <thead>
+                        <tr id="teacher-admin-head">
+                            <th>資料載入中</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-admin-body"></tbody>
+                </table>
+                <div id="teacher-admin-loading" style="padding: 20px; font-weight: bold; color: var(--text-light);">載入中...</div>
+            </div>
+
+            <div class="teacher-actions">
+                <h3>清除學生成績表單</h3>
+                <div class="controls">
+                    <button class="btn-danger" onclick="clearAllStudentScores()">一鍵清除整張表單</button>
+                </div>
+                <div style="font-size: 13px; color: var(--text-light); margin-top: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 遊戲結算 Modal -->
+    <div class="modal-overlay" id="game-over-modal">
+        <div class="modal-content">
+            <h1>⏰ 時間到！</h1>
+            <p style="font-size: 20px; font-weight: bold; margin-top: 10px;">您的最終得分為：</p>
+            <div class="score-highlight" id="final-score">0</div>
+            <p style="color: var(--text-light); margin-bottom: 25px;" id="save-status">成績處理中...</p>
+            <button class="btn-primary" id="close-game-over-btn" onclick="closeGameOver()">太棒了，繼續加油</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        const FALLBACK_LEADERBOARD_URL = "https://script.google.com/macros/s/AKfycbz3CzhS0d1j708XOj40WxiZJNIca1MUAa7LR_tBqcu-6gf0c8ezt0QBK5TrR0SxNUiNpA/exec";
+        const LEGACY_LEADERBOARD_READ_URL = "https://script.google.com/macros/s/AKfycbxg3aHmsqdN0VIehpVUABi38lahYCT0nLdUP9kRmgmF8Q880VOoHTVj--sGkOpR47lQmw/exec";
+        const FALLBACK_TEST_SCORE_URL = "https://script.google.com/macros/s/AKfycbw-sjU-XMi_JJnOD1SAf1T5cZgVhPDj34VrFefQ4bZLrBwWNFrdC87_via5VewAJ48G/exec";
+        const BACKEND_BOOTSTRAP_URL = FALLBACK_TEST_SCORE_URL;
+        let LEADERBOARD_APP_SCRIPT_URL = FALLBACK_LEADERBOARD_URL;
+        let TEST_SCORE_APP_SCRIPT_URL = FALLBACK_TEST_SCORE_URL;
+        const APP_SCRIPT_PLACEHOLDER = "https://script.google.com/macros/s/AKfycbxHo2Y18VkjCziSZ5P8Wv5O8Tt70tAKLY0lqYarj-GczZqIvOqeB5URhr9Ef899ma1O/exec";
+        const TEACHER_PAGE_SIZE_DEFAULT = 100;
+        const TEACHER_PAGE_SIZE_TEST = 40;
+        const CUSTOM_TEXT_STORAGE_KEY = 'customTypingTextLinesV1';
+        const TEST_SHEET_DIRECT_URL = 'https://docs.google.com/spreadsheets/d/1CbxS10NTF3Q7XQH37Z_Ji8Hh6u8kyyKtUqxwOWuCdUE/edit?gid=1930190967#gid=1930190967';
+        // ==========================================
+
+        const counts = {
+            'a': 19, 'b': 21, 'c': 18, 'd': 21, 'e': 19, 'f': 22, 'g': 20,
+            'h': 22, 'i': 22, 'j': 21, 'k': 23, 'l': 21, 'm': 22, 'n': 22,
+            'o': 22, 'p': 21, 'q': 19, 'r': 21,
+            's': 21, 't': 22, 'u': 18, 'v': 20, 'w': 18, 'x': 1, 'y': 21, 'z': 1
+        };
+
+        const cangjieMap = [
+            { char: '日', key: 'a' }, { char: '月', key: 'b' }, { char: '金', key: 'c' },
+            { char: '木', key: 'd' }, { char: '水', key: 'e' }, { char: '火', key: 'f' },
+            { char: '土', key: 'g' }, { char: '竹', key: 'h' }, { char: '戈', key: 'i' },
+            { char: '十', key: 'j' }, { char: '大', key: 'k' }, { char: '中', key: 'l' },
+            { char: '一', key: 'm' }, { char: '弓', key: 'n' }, { char: '人', key: 'o' },
+            { char: '心', key: 'p' }, { char: '手', key: 'q' }, { char: '口', key: 'r' },
+            { char: '尸', key: 's' }, { char: '廿', key: 't' }, { char: '山', key: 'u' },
+            { char: '女', key: 'v' }, { char: '田', key: 'w' }, { char: '卜', key: 'y' }
+        ];
+        const chineseTwoCharPool = Array.from('吐因引由安串天扣休吣囚亩明朋友三仕力沐未朋丁二古士杏找甲上下右吐回江主台且炎出仙林本王針里台士思苗巴');
+
+        // 定義每個字母對應的手指 ID
+        const fingerMapping = {
+            'q': 'lp', 'a': 'lp', 'z': 'lp',
+            'w': 'lr', 's': 'lr', 'x': 'lr',
+            'e': 'lm', 'd': 'lm', 'c': 'lm',
+            'r': 'li', 'f': 'li', 'v': 'li', 't': 'li', 'g': 'li', 'b': 'li',
+            'y': 'ri', 'h': 'ri', 'n': 'ri', 'u': 'ri', 'j': 'ri', 'm': 'ri',
+            'i': 'rm', 'k': 'rm',
+            'o': 'rr', 'l': 'rr',
+            'p': 'rp'
+        };
+
+        function getLetters(startChar, endChar) {
+            let result = [];
+            for (let i = startChar.charCodeAt(0); i <= endChar.charCodeAt(0); i++) {
+                result.push(String.fromCharCode(i));
+            }
+            return result;
+        }
+
+        function getFolderName(letter) {
+            if (letter >= 'a' && letter <= 'g') return 'philosophy';
+            if (letter >= 'h' && letter <= 'n') return 'strokes';
+            if (letter >= 'o' && letter <= 'r') return 'body';
+            if (letter >= 's' && letter <= 'z') return 'fonts';
+            return '';
+        }
+
+        const categoryMap = {
+            'cangjie':    { title: '倉頡碼字根', isTextMode: true },
+            'philosophy': { title: '哲理類 (A-G)',     letters: getLetters('a', 'g') },
+            'strokes':    { title: '筆劃類 (H-N)',     letters: getLetters('h', 'n') },
+            'body':       { title: '人身類 (O-R)',     letters: getLetters('o', 'r') },
+            'fonts':      { title: '字型類 (S-Y)',     letters: getLetters('s', 'y') },
+            'ph_st':      { title: '哲理+筆劃 (A-N)', letters: getLetters('a', 'n') },
+            'bo_fo':      { title: '人身+字型 (O-Y)', letters: getLetters('o', 'y') },
+            'all':        { title: '全輔助 (A-Z)',     letters: getLetters('a', 'z') },
+            'english':    { title: '英文打字 (A-Z)',   letters: getLetters('a', 'z'), isFallingMode: true },
+            'chinese_twochar': { title: '中文打字 - 兩碼字', isTextMode: true, acceptAnyInput: true, words: chineseTwoCharPool },
+            'chinese_custom': { title: '中文打字-自訂打字', isTextMode: true, acceptAnyInput: true }
+        };
+        const TEACHER_FIXED_MODE_OPTIONS = Object.values(categoryMap).map((item) => item.title);
+
+        let studentId = "";
+        let currentModeId = "";
+        let selectedTime = 180;
+        let currentPracticeMode = "practice";
+        let currentImageList = [];
+        let currentScore = 0;
+        let timeLeft = 0;
+        let timerInterval = null;
+        let isPlaying = false;
+        let currentTargetKey = "";
+        let currentErrorCount = 0; 
+        let currentAnyInputErrorCount = 0;
+        
+        let currentModeIsText = false;
+        let currentModeIsFalling = false;
+        let currentModeAcceptAnyInput = false;
+        let currentModeIsCustomText = false;
+        let isImeComposing = false;
+        let animationFrameId = null;
+        let fallingY = 0;
+        let isUploadInProgress = false;
+        let isTeacherLoggedIn = false;
+        let teacherAuthAccount = '';
+        let teacherAuthPassword = '';
+        let loginMode = 'student';
+        let teacherCurrentDataset = 'leaderboard';
+        let teacherRowsCache = { leaderboard: [], test: [] };
+        let teacherCurrentPage = 1;
+        let customTypingLines = [];
+        let customTypingCharPool = [];
+
+        const APP_SCRIPT_URL_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/;
+        const APP_SCRIPT_TIMEOUT_MS = 12000;
+
+        const mobileInput = document.getElementById('mobile-input');
+        const chineseImeInput = document.getElementById('chinese-ime-input');
+        const customTextUploadInput = document.getElementById('custom-text-upload');
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function parseCustomTextContent(content) {
+            return String(content || '')
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+        }
+
+        function buildCustomCharPool(lines) {
+            const merged = (lines || []).join('');
+            const chars = Array.from(merged).filter((char) => char && !/\s/.test(char));
+            return chars;
+        }
+
+        function loadCustomTypingLines() {
+            try {
+                const raw = localStorage.getItem(CUSTOM_TEXT_STORAGE_KEY);
+                if (!raw) {
+                    customTypingLines = [];
+                    return;
+                }
+                const parsed = JSON.parse(raw);
+                customTypingLines = Array.isArray(parsed)
+                    ? parsed.map(item => String(item).trim()).filter(Boolean)
+                    : [];
+                customTypingCharPool = buildCustomCharPool(customTypingLines);
+            } catch (error) {
+                console.warn('讀取自訂打字資料失敗，已重設。', error);
+                customTypingLines = [];
+                customTypingCharPool = [];
+            }
+        }
+
+        function saveCustomTypingLines(lines) {
+            customTypingLines = lines;
+            customTypingCharPool = buildCustomCharPool(lines);
+            localStorage.setItem(CUSTOM_TEXT_STORAGE_KEY, JSON.stringify(lines));
+        }
+
+
+        function isPlaceholderUrl(url) {
+            return !url || url === APP_SCRIPT_PLACEHOLDER;
+        }
+
+        async function loadBackendConfig() {
+            try {
+                const response = await fetch(`${BACKEND_BOOTSTRAP_URL}?action=getClientConfig`);
+                const result = await response.json();
+
+                if (result && result.result === 'success' && result.data) {
+                    const lbUrl = String(result.data.leaderboardUrl || '').trim();
+                    const testUrl = String(result.data.testScoreUrl || '').trim();
+
+                    if (lbUrl && isValidAppScriptExecUrl(lbUrl)) {
+                        LEADERBOARD_APP_SCRIPT_URL = lbUrl;
+                    }
+                    if (testUrl && isValidAppScriptExecUrl(testUrl)) {
+                        TEST_SCORE_APP_SCRIPT_URL = testUrl;
+                    }
+                }
+            } catch (error) {
+                console.warn('後端設定載入失敗，使用啟動網址繼續。', error);
+                LEADERBOARD_APP_SCRIPT_URL = FALLBACK_LEADERBOARD_URL;
+                TEST_SCORE_APP_SCRIPT_URL = FALLBACK_TEST_SCORE_URL;
+            }
+        }
+
+        function getTeacherAuthFromPayload(payload) {
+            return {
+                teacherAccount: String((payload && payload.teacherAccount) || teacherAuthAccount || '').trim(),
+                teacherPassword: String((payload && payload.teacherPassword) || teacherAuthPassword || '')
+            };
+        }
+
+        function buildTeacherAuthPayload(payload) {
+            const auth = getTeacherAuthFromPayload(payload);
+            return {
+                teacherAccount: auth.teacherAccount,
+                teacherPassword: auth.teacherPassword
+            };
+        }
+
+        function buildTeacherAuthQuery(payload) {
+            const auth = getTeacherAuthFromPayload(payload);
+            if (!auth.teacherAccount || !auth.teacherPassword) {
+                throw new Error('缺少教師登入資訊，請重新登入老師帳號。');
+            }
+
+            return `teacherAccount=${encodeURIComponent(auth.teacherAccount)}&teacherPassword=${encodeURIComponent(auth.teacherPassword)}`;
+        }
+
+        function isValidAppScriptExecUrl(url) {
+            return APP_SCRIPT_URL_PATTERN.test((url || '').trim());
+        }
+
+        function normalizeUploadError(error) {
+            const message = (error && error.message) ? error.message : String(error);
+
+            if (message === 'UPLOAD_TIMEOUT') {
+                return '連線逾時，請檢查網路後再試一次。';
+            }
+            if (message === 'UPLOAD_URL_INVALID') {
+                return '測驗上傳網址格式錯誤，請使用 /macros/s/.../exec 的部署網址。';
+            }
+            if (message.includes('Failed to fetch')) {
+                return '無法連線到 Google Apps Script。請確認 Web App 權限為「所有人」，並重新部署最新版。';
+            }
+            if (message.includes('伺服器沒有回傳 JSON')) {
+                return 'Apps Script 回應格式錯誤，請確認 doPost 有回傳 JSON。';
+            }
+
+            return message;
+        }
+
+        async function postToAppScript(url, payload) {
+            if (!isValidAppScriptExecUrl(url)) {
+                throw new Error('UPLOAD_URL_INVALID');
+            }
+
+            const formData = new URLSearchParams();
+            Object.entries(payload).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), APP_SCRIPT_TIMEOUT_MS);
+
+            let response;
+            try {
+                response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw new Error('UPLOAD_TIMEOUT');
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+
+            const rawText = await response.text();
+
+            let result;
+            try {
+                result = JSON.parse(rawText);
+            } catch (error) {
+                throw new Error(`伺服器沒有回傳 JSON：${rawText.slice(0, 120)}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(result.message || `HTTP ${response.status}`);
+            }
+
+            if (result.result !== "success") {
+                throw new Error(result.message || "伺服器回傳失敗");
+            }
+
+            return result;
+        }
+
+        // ================= 登入驗證 =================
+        window.onload = async () => {
+            await loadBackendConfig();
+            loadCustomTypingLines();
+            document.getElementById('login-modal').classList.add('active');
+            document.getElementById('student-id-input').focus();
+        };
+
+        document.getElementById('student-id-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') window.verifyLogin();
+        });
+
+        document.getElementById('teacher-username-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') window.verifyLogin();
+        });
+
+        document.getElementById('teacher-password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') window.verifyLogin();
+        });
+
+        window.switchLoginMode = (mode) => {
+            loginMode = mode;
+            const isStudentMode = mode === 'student';
+
+            document.getElementById('student-login-tab').classList.toggle('active', isStudentMode);
+            document.getElementById('teacher-login-tab').classList.toggle('active', !isStudentMode);
+            document.getElementById('student-login-fields').classList.toggle('hidden', !isStudentMode);
+            document.getElementById('teacher-login-fields').classList.toggle('hidden', isStudentMode);
+            document.getElementById('login-title-text').innerText = isStudentMode
+                ? '請先輸入您的專屬學號'
+                : '請輸入老師帳號與密碼';
+            document.getElementById('login-error').innerText = '';
+
+            if (isStudentMode) {
+                document.getElementById('student-id-input').focus();
+            } else {
+                document.getElementById('teacher-username-input').focus();
+            }
+        };
+
+        function updateStudentBadgeMeta() {
+            const modeSelect = document.getElementById('practice-mode-select');
+            const timeSelect = document.getElementById('time-select');
+            const modeLabel = modeSelect.options[modeSelect.selectedIndex].text;
+            const timeLabel = timeSelect.options[timeSelect.selectedIndex].text.replace(/\s/g, '');
+
+            document.getElementById('display-practice-mode').innerText = modeLabel;
+            document.getElementById('display-practice-time').innerText = timeLabel;
+        }
+
+        async function authenticateTeacherLogin(teacherAccount, teacherPassword) {
+            const endpoints = [TEST_SCORE_APP_SCRIPT_URL, LEADERBOARD_APP_SCRIPT_URL]
+                .filter((url, index, arr) => !!url && arr.indexOf(url) === index);
+
+            let lastError = null;
+
+            for (const endpoint of endpoints) {
+                try {
+                    const query = `action=teacherAuth&teacherAccount=${encodeURIComponent(teacherAccount)}&teacherPassword=${encodeURIComponent(teacherPassword)}`;
+                    const authUrl = `${endpoint}?${query}`;
+                    const response = await fetch(authUrl);
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        lastError = new Error(result.message || `HTTP ${response.status}`);
+                        continue;
+                    }
+
+                    if (result.result === 'success') {
+                        return true;
+                    }
+
+                    lastError = new Error(result.message || '老師帳號或密碼錯誤');
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('老師帳號或密碼錯誤');
+        }
+
+        window.verifyLogin = async () => {
+            const errorMsg = document.getElementById('login-error');
+            const teacherButton = document.getElementById('teacher-admin-btn');
+            const regex = /^P[1-6][A-F](0[1-9]|[1-3][0-9]|40)$/i;
+
+            if (loginMode === 'teacher') {
+                const username = document.getElementById('teacher-username-input').value.trim().toUpperCase();
+                const password = document.getElementById('teacher-password-input').value.trim();
+
+                try {
+                    await authenticateTeacherLogin(username, password);
+                    isTeacherLoggedIn = true;
+                    teacherAuthAccount = username;
+                    teacherAuthPassword = password;
+                    studentId = username;
+                    document.getElementById('display-student-id').innerText = '*****';
+                    document.getElementById('student-badge').style.display = 'block';
+                    teacherButton.classList.remove('hidden');
+                    document.getElementById('login-modal').classList.remove('active');
+                    document.getElementById('teacher-password-input').value = '';
+                    errorMsg.innerText = '';
+                    window.openTeacherAdmin();
+                    return;
+                } catch (error) {
+                    errorMsg.innerText = normalizeUploadError(error);
+                    return;
+                }
+            }
+
+            const input = document.getElementById('student-id-input').value.trim().toUpperCase();
+
+            if (regex.test(input)) {
+                isTeacherLoggedIn = false;
+                studentId = input;
+                document.getElementById('display-student-id').innerText = studentId;
+                document.getElementById('student-badge').style.display = 'block';
+                updateStudentBadgeMeta();
+                teacherButton.classList.add('hidden');
+                document.getElementById('login-modal').classList.remove('active');
+                errorMsg.innerText = "";
+            } else {
+                errorMsg.innerText = "格式錯誤！請輸入正確格式，如：P6A02";
+            }
+        };
+
+        window.logoutUser = () => {
+            if (isUploadInProgress) return;
+
+            isPlaying = false;
+            clearInterval(timerInterval);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            isTeacherLoggedIn = false;
+            teacherAuthAccount = '';
+            teacherAuthPassword = '';
+            loginMode = 'student';
+            studentId = '';
+            currentModeId = '';
+            currentImageList = [];
+            currentScore = 0;
+            timeLeft = 0;
+
+            document.getElementById('display-student-id').innerText = '未登入';
+            document.getElementById('student-badge').style.display = 'none';
+            document.getElementById('teacher-admin-btn').classList.add('hidden');
+            document.getElementById('student-id-input').value = '';
+            document.getElementById('teacher-username-input').value = '';
+            document.getElementById('teacher-password-input').value = '';
+            document.getElementById('login-error').innerText = '';
+            document.getElementById('game-over-modal').classList.remove('active');
+            document.getElementById('leaderboard-modal').classList.remove('active');
+            document.getElementById('teacher-admin-modal').classList.remove('active');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('chinese-menu-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('login-modal').classList.add('active');
+            window.switchLoginMode('student');
+        };
+
+        document.getElementById('practice-mode-select').addEventListener('change', updateStudentBadgeMeta);
+        document.getElementById('time-select').addEventListener('change', updateStudentBadgeMeta);
+        updateStudentBadgeMeta();
+
+        // ================= 動畫掉落邏輯 =================
+        function gameLoop() {
+            if (!isPlaying || !currentModeIsFalling) return;
+            
+            let progress = (selectedTime - timeLeft) / selectedTime;
+            // 速度再調慢 20%：讓小學生有更充裕的反應時間
+            let speed = (0.7 + progress * 1.8) * 0.8; 
+            
+            fallingY += speed;
+            const fallingEl = document.getElementById('the-falling-letter');
+            fallingEl.style.top = fallingY + 'px';
+
+            // 掉到底部邊界判定 (掉落框高400px，字母約80px，所以底線是320)
+            if (fallingY > 320) {
+                currentScore -= 1; // 掉到地上只扣 1 分
+                document.getElementById('score').innerText = currentScore;
+                
+                const feedbackElement = document.getElementById('feedback');
+                feedbackElement.innerText = "💦 掉下去了！ (-1)";
+                feedbackElement.className = "feedback wrong";
+                void feedbackElement.offsetWidth;
+                
+                nextImage();
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // ================= 遊戲核心 =================
+        window.startGame = (categoryId) => {
+            currentModeId = categoryId;
+            selectedTime = parseInt(document.getElementById('time-select').value);
+            currentPracticeMode = document.getElementById('practice-mode-select').value;
+            
+            const category = categoryMap[categoryId];
+            currentModeIsText = category.isTextMode === true;
+            currentModeIsFalling = category.isFallingMode === true;
+            currentModeAcceptAnyInput = category.acceptAnyInput === true;
+            currentModeIsCustomText = categoryId === 'chinese_custom';
+            currentImageList = [];
+
+            // 切換顯示介面
+            document.getElementById('char-display').classList.add('hidden');
+            document.getElementById('char-display').classList.remove('custom-text-mode');
+            document.getElementById('image-display').classList.add('hidden');
+            document.getElementById('falling-container').classList.add('hidden');
+            document.getElementById('keyboard-layout').classList.add('hidden');
+
+            if (currentModeIsFalling) {
+                currentImageList = category.letters; 
+                document.getElementById('hint-text').innerText = `💡 參考下方亮起的鍵盤與雙手，按出正確字母`;
+                document.getElementById('falling-container').classList.remove('hidden');
+                document.getElementById('keyboard-layout').classList.remove('hidden'); // 顯示動態雙手鍵盤
+            } else if (currentModeIsText) {
+                if (categoryId === 'chinese_twochar') {
+                    currentImageList = category.words.map(item => ({ char: item, key: item }));
+                    document.getElementById('hint-text').innerText = `💡 請用倉頡/速成/拼音輸入上方中文字（答對+1，答錯-2）`;
+                } else if (categoryId === 'chinese_custom') {
+                    loadCustomTypingLines();
+                    if (!customTypingCharPool.length) {
+                        alert('目前沒有自訂打字內容，請老師先在教師後台上傳 TXT。');
+                        window.returnToMenu();
+                        return;
+                    }
+                    currentImageList = customTypingCharPool.map(item => ({ char: item, key: item }));
+                    document.getElementById('hint-text').innerText = `💡 請用倉頡/速成/拼音輸入上方文字（每答對一字 +1）`;
+                } else {
+                    currentImageList = [...cangjieMap];
+                    document.getElementById('hint-text').innerText = `💡 請輸入上方字根對應的英文字母`;
+                }
+                document.getElementById('char-display').classList.remove('hidden');
+            } else {
+                const currentValidLetters = category.letters;
+                currentValidLetters.forEach(letter => {
+                    const limit = counts[letter];
+                    const folder = getFolderName(letter); 
+                    for (let i = 1; i <= limit; i++) {
+                        currentImageList.push({ key: letter, index: i, folder: folder });
+                    }
+                });
+                
+                const hintStart = currentValidLetters[0].toUpperCase();
+                const hintEnd = currentValidLetters[currentValidLetters.length - 1].toUpperCase();
+                document.getElementById('hint-text').innerText = `💡 請輸入圖片對應的英文字母 (範圍：${hintStart} - ${hintEnd})`;
+                document.getElementById('image-display').classList.remove('hidden');
+            }
+
+            if (currentImageList.length === 0) return alert("找不到對應的題目設定！");
+
+            currentScore = 0; isPlaying = true; timeLeft = selectedTime;
+            currentAnyInputErrorCount = 0;
+            document.getElementById('category-title').innerText = category.title;
+            document.getElementById('score').innerText = currentScore;
+            
+            const feedbackElement = document.getElementById('feedback');
+            feedbackElement.innerText = "準備開始！"; feedbackElement.className = "feedback"; 
+            document.getElementById('timer').classList.remove('timer-red'); 
+            
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            mobileInput.value = '';
+            chineseImeInput.value = '';
+            chineseImeInput.placeholder = '請在此輸入中文';
+            if (currentModeAcceptAnyInput) {
+                chineseImeInput.classList.remove('hidden');
+                chineseImeInput.focus();
+            } else {
+                chineseImeInput.classList.add('hidden');
+                mobileInput.focus();
+            }
+
+            updateTimerUI(); nextImage();
+
+            timerInterval = setInterval(() => {
+                timeLeft--; updateTimerUI();
+                if (timeLeft <= 0) triggerGameOver();
+            }, 1000);
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (currentModeIsFalling) {
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        };
+
+        function nextImage() {
+            if (!isPlaying || currentImageList.length === 0) return;
+            
+            // 清除舊的發亮效果 (鍵盤 + 手指)
+            document.querySelectorAll('.active-key').forEach(el => el.classList.remove('active-key'));
+            document.querySelectorAll('.active-finger').forEach(el => el.classList.remove('active-finger'));
+
+            if (currentModeIsFalling) {
+                const letters = categoryMap['english'].letters;
+                currentTargetKey = letters[Math.floor(Math.random() * letters.length)];
+                fallingY = 0; 
+                
+                const fallingEl = document.getElementById('the-falling-letter');
+                fallingEl.innerText = currentTargetKey.toUpperCase();
+                fallingEl.style.left = Math.floor(Math.random() * 80 + 10) + '%'; 
+                fallingEl.style.top = fallingY + 'px';
+                currentErrorCount = 0;
+
+                // 1. 讓虛擬鍵盤對應按鍵發亮
+                const targetKeyElement = document.getElementById('key-' + currentTargetKey.toLowerCase());
+                if(targetKeyElement) targetKeyElement.classList.add('active-key');
+
+                // 2. 讓對應的手指發亮
+                const fingerId = fingerMapping[currentTargetKey.toLowerCase()];
+                if(fingerId) {
+                    const targetFingerElement = document.getElementById('finger-' + fingerId);
+                    if(targetFingerElement) targetFingerElement.classList.add('active-finger');
+                }
+
+            } else {
+                const randomItem = currentImageList[Math.floor(Math.random() * currentImageList.length)];
+                if (currentModeIsText) {
+                    document.getElementById('char-display').innerText = randomItem.char;
+                    currentTargetKey = randomItem.key;
+                } else {
+                    const imgElement = document.getElementById('image-display');
+                    imgElement.onerror = null; 
+                    imgElement.src = `PIC/${randomItem.folder}/${randomItem.key} (${randomItem.index}).png`;
+                    currentTargetKey = randomItem.key;
+                }
+                currentErrorCount = 0;
+                currentAnyInputErrorCount = 0;
+            }
+        }
+
+        function updateTimerUI() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerElement = document.getElementById('timer');
+            timerElement.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            if (timeLeft <= 10 && timeLeft > 0) timerElement.classList.add('timer-red');
+            else timerElement.classList.remove('timer-red');
+        }
+
+        function processInput(keyPressed) {
+            const feedbackElement = document.getElementById('feedback');
+            feedbackElement.classList.remove('correct', 'wrong');
+            void feedbackElement.offsetWidth; 
+
+            if (currentModeAcceptAnyInput) {
+                if (keyPressed === currentTargetKey) {
+                    currentScore += 1;
+                    currentAnyInputErrorCount = 0;
+                    feedbackElement.innerText = "🌟 答對了！ (+1)";
+                    feedbackElement.classList.add('correct');
+                    nextImage();
+                } else {
+                    currentScore -= 2;
+                    currentAnyInputErrorCount += 1;
+                    if (currentAnyInputErrorCount >= 3) {
+                        feedbackElement.innerText = "💦 錯滿 3 次，自動換下一題 (-2)";
+                        currentAnyInputErrorCount = 0;
+                        feedbackElement.classList.add('wrong');
+                        document.getElementById('score').innerText = currentScore;
+                        nextImage();
+                        return;
+                    }
+                    feedbackElement.innerText = `💦 錯了！ (-2) (已錯 ${currentAnyInputErrorCount}/3 次)`;
+                    feedbackElement.classList.add('wrong');
+                }
+
+                document.getElementById('score').innerText = currentScore;
+                return;
+            }
+            
+            if (keyPressed === currentTargetKey) {
+                currentScore += 1;
+                feedbackElement.innerText = "🌟 答對了！ (+1)";
+                feedbackElement.classList.add('correct');
+                nextImage(); 
+            } else {
+                currentScore -= 2;
+                currentErrorCount += 1;
+                
+                if (currentErrorCount >= 3) {
+                    feedbackElement.innerText = "💦 錯滿 3 次，自動跳過 (-2)";
+                    feedbackElement.classList.add('wrong');
+                    nextImage(); 
+                } else {
+                    feedbackElement.innerText = `💦 哎呀，錯了 (-2) (已錯 ${currentErrorCount}/3 次)`;
+                    feedbackElement.classList.add('wrong');
+                }
+            }
+            document.getElementById('score').innerText = currentScore;
+        }
+
+        window.addEventListener('keydown', (event) => {
+            if (!isPlaying || event.repeat) return;
+            if (event.target.id === 'mobile-input') return;
+            if (currentModeAcceptAnyInput) return;
+            const keyPressed = event.key.toLowerCase();
+            if (/^[a-z]$/.test(keyPressed)) processInput(keyPressed);
+        });
+
+        function processChineseImeInput(committedText) {
+            if (!isPlaying || !currentModeAcceptAnyInput) return;
+            const normalized = String(committedText || '');
+            if (!normalized) return;
+
+            // IME 可能一次提交多字，兩碼字目前以最後提交字做判分。
+            const finalChar = normalized.slice(-1);
+            processInput(finalChar);
+        }
+
+        mobileInput.addEventListener('keydown', (event) => { if (event.repeat) event.preventDefault(); });
+        mobileInput.addEventListener('compositionstart', () => { isImeComposing = true; });
+        mobileInput.addEventListener('compositionend', (event) => {
+            isImeComposing = false;
+            mobileInput.value = '';
+            processChineseImeInput(event.data || '');
+        });
+        mobileInput.addEventListener('input', (event) => {
+            if (!isPlaying) return;
+            const rawInput = event.data ? event.data : "";
+            mobileInput.value = ''; 
+
+            if (currentModeAcceptAnyInput) {
+                if (isImeComposing) return;
+                processChineseImeInput(rawInput);
+                return;
+            }
+
+            const keyPressed = rawInput.toLowerCase();
+            if (keyPressed && /^[a-z]$/.test(keyPressed)) processInput(keyPressed);
+        });
+
+        chineseImeInput.addEventListener('compositionstart', () => { isImeComposing = true; });
+        chineseImeInput.addEventListener('compositionend', (event) => {
+            isImeComposing = false;
+            processChineseImeInput(event.data || chineseImeInput.value || '');
+            chineseImeInput.value = '';
+        });
+        chineseImeInput.addEventListener('input', () => {
+            if (!isPlaying || !currentModeAcceptAnyInput || isImeComposing) return;
+            if (currentModeIsCustomText) return;
+            processChineseImeInput(chineseImeInput.value);
+            chineseImeInput.value = '';
+        });
+
+        document.getElementById('game-screen').addEventListener('click', () => {
+            if (!isPlaying) return;
+            if (currentModeAcceptAnyInput) {
+                chineseImeInput.focus();
+            } else {
+                mobileInput.focus();
+            }
+        });
+
+        window.returnToMenu = () => {
+            if (isUploadInProgress) return;
+            isPlaying = false; 
+            clearInterval(timerInterval);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            chineseImeInput.classList.add('hidden');
+            chineseImeInput.value = '';
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        };
+
+        window.openChineseTypingMenu = () => {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('chinese-menu-screen').classList.remove('hidden');
+        };
+
+        window.closeChineseTypingMenu = () => {
+            document.getElementById('chinese-menu-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        };
+
+        window.selectChineseTypingMode = (modeName) => {
+            const normalizedModeName = String(modeName || '').trim();
+
+            if (normalizedModeName === '兩碼字' || normalizedModeName.includes('兩碼字')) {
+                window.closeChineseTypingMenu();
+                window.startGame('chinese_twochar');
+                return;
+            }
+
+            if (normalizedModeName === '自訂打字' || normalizedModeName.includes('自訂打字')) {
+                window.closeChineseTypingMenu();
+                window.startGame('chinese_custom');
+                return;
+            }
+
+            console.warn(`${normalizedModeName} 功能尚未接上`);
+        };
+
+        window.triggerCustomTextUpload = () => {
+            if (!isTeacherLoggedIn) return;
+            customTextUploadInput.value = '';
+            customTextUploadInput.click();
+        };
+
+        customTextUploadInput.addEventListener('change', async (event) => {
+            if (!isTeacherLoggedIn) return;
+
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const isTxt = /\.txt$/i.test(file.name) || file.type === 'text/plain';
+            if (!isTxt) {
+                setTeacherStatus('請上傳 .txt 文字檔。', true);
+                return;
+            }
+
+            try {
+                const content = await file.text();
+                const lines = parseCustomTextContent(content);
+
+                if (!lines.length) {
+                    setTeacherStatus('TXT 檔沒有可用內容，請至少放一行文字。', true);
+                    return;
+                }
+
+                saveCustomTypingLines(lines);
+                setTeacherStatus(`已上傳自訂打字 ${lines.length} 行，將用於「中文打字-自訂打字」。`);
+            } catch (error) {
+                console.error('讀取 TXT 失敗', error);
+                setTeacherStatus('TXT 讀取失敗，請再試一次。', true);
+            }
+        });
+
+        // ================= Google 表格連線：上傳成績 =================
+        async function triggerGameOver() {
+            isPlaying = false; 
+            clearInterval(timerInterval); 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            mobileInput.blur(); 
+            chineseImeInput.blur();
+            
+            document.getElementById('final-score').innerText = currentScore;
+            const saveStatus = document.getElementById('save-status');
+            const closeButton = document.getElementById('close-game-over-btn');
+            document.getElementById('game-over-modal').classList.add('active');
+
+            const minUnlockDelay = new Promise((resolve) => setTimeout(resolve, 2000));
+            const disableCloseButton = () => {
+                if (!closeButton) return;
+                closeButton.disabled = true;
+                closeButton.style.opacity = "0.6";
+                closeButton.style.cursor = "not-allowed";
+            };
+            const enableCloseButton = () => {
+                if (!closeButton) return;
+                closeButton.disabled = false;
+                closeButton.style.opacity = "";
+                closeButton.style.cursor = "";
+            };
+
+            disableCloseButton();
+
+            if (isTeacherLoggedIn) {
+                saveStatus.innerText = "教師後台帳號不會上傳或記錄成績。";
+                saveStatus.style.color = "var(--text-light)";
+                await minUnlockDelay;
+                enableCloseButton();
+                return;
+            }
+
+            if (currentPracticeMode === "test") {
+                if (isPlaceholderUrl(TEST_SCORE_APP_SCRIPT_URL)) {
+                    saveStatus.innerText = "尚未設定測驗模式 Google 表格網址，無法上傳！";
+                    saveStatus.style.color = "var(--danger-color)";
+                    await minUnlockDelay;
+                    enableCloseButton();
+                    return;
+                }
+
+                if (!isValidAppScriptExecUrl(TEST_SCORE_APP_SCRIPT_URL)) {
+                    saveStatus.innerText = "測驗網址格式錯誤，請使用 /macros/s/.../exec 的部署網址。";
+                    saveStatus.style.color = "var(--danger-color)";
+                    await minUnlockDelay;
+                    enableCloseButton();
+                    return;
+                }
+
+                if (isUploadInProgress) return;
+                isUploadInProgress = true;
+
+                saveStatus.innerText = "正在上傳測驗成績至 Google 試算表...";
+                saveStatus.style.color = "var(--text-light)";
+
+                try {
+                    const result = await postToAppScript(TEST_SCORE_APP_SCRIPT_URL, {
+                        studentId,
+                        score: currentScore,
+                        mode: categoryMap[currentModeId].title,
+                        time: selectedTime
+                    });
+
+                    if (result.result === "success") {
+                        saveStatus.innerText = "✅ 測驗成績已成功上傳至 Google 試算表！";
+                        saveStatus.style.color = "var(--success-color)";
+                    }
+                } catch (e) {
+                    console.error("測驗成績儲存失敗", e);
+                    saveStatus.innerText = `⚠️ 測驗成績上傳失敗：${normalizeUploadError(e)}`;
+                    saveStatus.style.color = "var(--danger-color)";
+                } finally {
+                    await minUnlockDelay;
+                    isUploadInProgress = false;
+                    enableCloseButton();
+                }
+                return;
+            }
+            
+            if (isPlaceholderUrl(LEADERBOARD_APP_SCRIPT_URL)) {
+                saveStatus.innerText = "尚未設定 Google 表格網址，無法上傳！";
+                saveStatus.style.color = "var(--danger-color)";
+                await minUnlockDelay;
+                enableCloseButton();
+                return;
+            }
+
+            if (currentScore > 0) {
+                isUploadInProgress = true;
+                saveStatus.innerText = "正在上傳成績至 Google 表格龍虎榜...";
+                saveStatus.style.color = "var(--text-light)";
+
+                try {
+                    const result = await postToAppScript(LEADERBOARD_APP_SCRIPT_URL, {
+                        studentId,
+                        score: currentScore,
+                        mode: categoryMap[currentModeId].title,
+                        time: selectedTime
+                    });
+                    
+                    if(result.result === "success") {
+                        saveStatus.innerText = "✅ 成績已成功上傳至龍虎榜！";
+                        saveStatus.style.color = "var(--success-color)";
+                    }
+                } catch (e) {
+                    console.error("儲存失敗", e);
+                    saveStatus.innerText = `⚠️ 上傳失敗：${e.message}`;
+                    saveStatus.style.color = "var(--danger-color)";
+                } finally {
+                    await minUnlockDelay;
+                    isUploadInProgress = false;
+                    enableCloseButton();
+                }
+            } else {
+                saveStatus.innerText = "本次分數太低，沒有進入龍虎榜，再接再厲！";
+                saveStatus.style.color = "var(--text-light)";
+                await minUnlockDelay;
+                enableCloseButton();
+            }
+        }
+
+        window.closeGameOver = () => {
+            if (isUploadInProgress) return;
+            document.getElementById('game-over-modal').classList.remove('active');
+            window.returnToMenu();
+        };
+
+        // ================= Google 表格連線：讀取龍虎榜 =================
+        window.openLeaderboard = () => {
+            document.getElementById('leaderboard-modal').classList.add('active');
+            document.getElementById('lb-time-select').value = document.getElementById('time-select').value;
+            window.loadLeaderboard();
+        };
+
+        window.closeLeaderboard = () => {
+            document.getElementById('leaderboard-modal').classList.remove('active');
+        };
+
+        window.loadLeaderboard = async () => {
+            const tableBody = document.getElementById('leaderboard-body');
+            const loading = document.getElementById('lb-loading');
+            
+            tableBody.innerHTML = "";
+            loading.style.display = "block";
+            loading.innerText = "正在從 Google 表格抓取最新排名...";
+
+            if (isPlaceholderUrl(LEADERBOARD_APP_SCRIPT_URL)) {
+                loading.innerText = "尚未設定 Google 表格網址，無法讀取資料。";
+                return;
+            }
+
+            const targetMode = document.getElementById('lb-mode-select').value;
+            const targetTime = parseInt(document.getElementById('lb-time-select').value);
+
+            try {
+                const readCandidateUrls = [LEADERBOARD_APP_SCRIPT_URL, LEGACY_LEADERBOARD_READ_URL]
+                    .filter((url, index, arr) => !!url && arr.indexOf(url) === index && isValidAppScriptExecUrl(url));
+
+                let sortedScores = [];
+                let hasLoaded = false;
+
+                async function fetchScoresByTime(seconds) {
+                    for (const baseUrl of readCandidateUrls) {
+                        const fetchUrl = `${baseUrl}?mode=${encodeURIComponent(targetMode)}&time=${seconds}`;
+                        try {
+                            const response = await fetch(fetchUrl);
+                            const result = await response.json();
+                            if (!response.ok || !Array.isArray(result)) {
+                                continue;
+                            }
+
+                            if (result.length > 0 || baseUrl === LEGACY_LEADERBOARD_READ_URL) {
+                                return { ok: true, rows: result };
+                            }
+                        } catch (error) {
+                            continue;
+                        }
+                    }
+
+                    return { ok: false, rows: [] };
+                }
+
+                const primaryResult = await fetchScoresByTime(targetTime);
+                if (primaryResult.ok) {
+                    sortedScores = primaryResult.rows;
+                    hasLoaded = true;
+                }
+
+                loading.style.display = "none";
+
+                if (!hasLoaded) {
+                    throw new Error('排行榜資料讀取失敗');
+                }
+
+                if (sortedScores.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan=\"3\" style=\"color: var(--text-light); padding: 30px;\">目前這個模式還沒有人挑戰喔，趕快來當第一名！</td></tr>`;
+                    return;
+                }
+
+                sortedScores.forEach((data, index) => {
+                    const rank = index + 1;
+                    const tr = document.createElement('tr');
+                    if (rank <= 3) tr.classList.add(`rank-${rank}`);
+                    
+                    let rankDisplay = rank;
+                    if (rank === 1) rankDisplay = '🥇 1';
+                    if (rank === 2) rankDisplay = '🥈 2';
+                    if (rank === 3) rankDisplay = '🥉 3';
+
+                    tr.innerHTML = `
+                        <td>${rankDisplay}</td>
+                        <td>${data.studentId}</td>
+                        <td style=\"color: var(--success-color);\">${data.score}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error("讀取排行榜失敗", error);
+                loading.innerText = "無法載入排行榜，請稍後再試或檢查網址。";
+            }
+        };
+
+        function setTeacherStatus(message, isError = false) {
+            const statusEl = document.getElementById('teacher-admin-status');
+            statusEl.style.color = isError ? 'var(--danger-color)' : 'var(--text-light)';
+            statusEl.innerText = message;
+        }
+
+        function escapeCsvValue(value) {
+            const str = String(value ?? '');
+            if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        }
+
+        function getTeacherApiUrl(dataset) {
+            const baseUrl = dataset === 'leaderboard' ? LEADERBOARD_APP_SCRIPT_URL : TEST_SCORE_APP_SCRIPT_URL;
+            const action = dataset === 'leaderboard' ? 'teacherListLeaderboard' : 'teacherListTestScores';
+            const authQuery = buildTeacherAuthQuery();
+            return `${baseUrl}?action=${encodeURIComponent(action)}&${authQuery}`;
+        }
+
+        function getTeacherApiCandidateUrls(dataset) {
+            const primary = dataset === 'leaderboard' ? LEADERBOARD_APP_SCRIPT_URL : TEST_SCORE_APP_SCRIPT_URL;
+            const secondary = dataset === 'leaderboard' ? TEST_SCORE_APP_SCRIPT_URL : LEADERBOARD_APP_SCRIPT_URL;
+            const extra = dataset === 'leaderboard'
+                ? [FALLBACK_LEADERBOARD_URL, FALLBACK_TEST_SCORE_URL]
+                : [FALLBACK_TEST_SCORE_URL, FALLBACK_LEADERBOARD_URL];
+
+            return [primary, secondary, ...extra].filter((url, index, arr) => {
+                return !!url && arr.indexOf(url) === index && isValidAppScriptExecUrl(url);
+            });
+        }
+
+        function renderTeacherTable(rows) {
+            const head = document.getElementById('teacher-admin-head');
+            const body = document.getElementById('teacher-admin-body');
+
+            head.innerHTML = '';
+            body.innerHTML = '';
+
+            if (!rows.length) {
+                head.innerHTML = '<th>目前沒有資料</th>';
+                body.innerHTML = '<tr><td style="color: var(--text-light); padding: 28px;">目前沒有可顯示的紀錄。</td></tr>';
+                return;
+            }
+
+            const columns = Object.keys(rows[0]);
+            columns.forEach((column) => {
+                const th = document.createElement('th');
+                th.innerText = column;
+                head.appendChild(th);
+            });
+
+            rows.forEach((row) => {
+                const tr = document.createElement('tr');
+                columns.forEach((column) => {
+                    const td = document.createElement('td');
+                    td.innerText = row[column] ?? '';
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+        }
+
+        function detectModeColumn(rows) {
+            if (!rows.length) return null;
+            const keys = Object.keys(rows[0]);
+
+            return keys.find((k) => /^(mode|模式|測驗類別)$/i.test(String(k).trim()))
+                || keys.find((k) => /(mode|模式|測驗類別|類別)/i.test(String(k)));
+        }
+
+        function getTeacherPageSize() {
+            return teacherCurrentDataset === 'test' ? TEACHER_PAGE_SIZE_TEST : TEACHER_PAGE_SIZE_DEFAULT;
+        }
+
+        function updateTeacherModeFilterState() {
+            const modeSelect = document.getElementById('teacher-mode-filter');
+            const disableModeFilter = teacherCurrentDataset === 'test';
+            modeSelect.disabled = disableModeFilter;
+            modeSelect.style.opacity = disableModeFilter ? '0.6' : '';
+
+            if (disableModeFilter) {
+                modeSelect.value = '__ALL__';
+            }
+        }
+
+        function updateTeacherModeFilterOptions(rows) {
+            const modeSelect = document.getElementById('teacher-mode-filter');
+            const previousValue = modeSelect.value;
+            const modeKey = detectModeColumn(rows);
+
+            modeSelect.innerHTML = '<option value="__ALL__">全部模式</option>';
+
+            const modeSet = new Set(TEACHER_FIXED_MODE_OPTIONS);
+
+            if (modeKey) {
+                rows.forEach((row) => {
+                    const modeValue = String(row[modeKey] ?? '').trim();
+                    if (modeValue) modeSet.add(modeValue);
+                });
+            }
+
+            Array.from(modeSet).sort().forEach((modeValue) => {
+                const option = document.createElement('option');
+                option.value = modeValue;
+                option.innerText = modeValue;
+                modeSelect.appendChild(option);
+            });
+
+            if (previousValue && [...modeSet].includes(previousValue)) {
+                modeSelect.value = previousValue;
+            } else {
+                modeSelect.value = '__ALL__';
+            }
+        }
+
+        function getFilteredTeacherRows() {
+            const rows = teacherRowsCache[teacherCurrentDataset] || [];
+            const selectedMode = document.getElementById('teacher-mode-filter').value;
+            const modeKey = detectModeColumn(rows);
+
+            if (!rows.length || selectedMode === '__ALL__' || !modeKey) {
+                return rows;
+            }
+
+            return rows.filter((row) => String(row[modeKey] ?? '').trim() === selectedMode);
+        }
+
+        function updateTeacherPagination(totalFilteredRows) {
+            const pageInfo = document.getElementById('teacher-page-info');
+            const prevBtn = document.getElementById('teacher-page-prev');
+            const nextBtn = document.getElementById('teacher-page-next');
+            const pageSize = getTeacherPageSize();
+
+            const totalPages = Math.max(1, Math.ceil(totalFilteredRows / pageSize));
+            teacherCurrentPage = Math.min(Math.max(1, teacherCurrentPage), totalPages);
+
+            prevBtn.disabled = teacherCurrentPage <= 1;
+            nextBtn.disabled = teacherCurrentPage >= totalPages;
+            prevBtn.style.opacity = prevBtn.disabled ? '0.6' : '';
+            nextBtn.style.opacity = nextBtn.disabled ? '0.6' : '';
+
+            pageInfo.innerText = `第 ${teacherCurrentPage} / ${totalPages} 頁，每頁 ${pageSize} 筆（共 ${totalFilteredRows} 筆）`;
+        }
+
+        function renderTeacherTableByCurrentState() {
+            const filteredRows = getFilteredTeacherRows();
+            const pageSize = getTeacherPageSize();
+            updateTeacherPagination(filteredRows.length);
+
+            const start = (teacherCurrentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageRows = filteredRows.slice(start, end);
+
+            renderTeacherTable(pageRows);
+        }
+
+        async function fetchTeacherRows(dataset) {
+            const action = dataset === 'leaderboard' ? 'teacherListLeaderboard' : 'teacherListTestScores';
+            const authQuery = buildTeacherAuthQuery();
+            const candidateUrls = getTeacherApiCandidateUrls(dataset);
+
+            if (!candidateUrls.length) {
+                throw new Error('後端網址設定錯誤，請確認 GAS exec URL。');
+            }
+
+            let lastErrorMessage = '';
+
+            async function endpointSupportsTeacherActions(baseUrl) {
+                const probeUrl = `${baseUrl}?action=teacherGetSheetUrl&${authQuery}`;
+
+                try {
+                    const probeResp = await fetch(probeUrl);
+                    const probeText = await probeResp.text();
+                    const probeJson = JSON.parse(probeText);
+                    return probeResp.ok && probeJson && probeJson.result === 'success' && !!probeJson.url;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            for (const baseUrl of candidateUrls) {
+                const url = `${baseUrl}?action=${encodeURIComponent(action)}&${authQuery}`;
+
+                try {
+                    const response = await fetch(url);
+                    const raw = await response.text();
+
+                    let result;
+                    try {
+                        result = JSON.parse(raw);
+                    } catch (error) {
+                        lastErrorMessage = `無法解析資料：${raw.slice(0, 120)}`;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        lastErrorMessage = result.message || `HTTP ${response.status}`;
+                        continue;
+                    }
+
+                    if (result && result.message === 'test doPost is running') {
+                        lastErrorMessage = '目前連到舊版 Apps Script（test doPost is running），請重新部署最新版。';
+                        continue;
+                    }
+
+                    if (Array.isArray(result)) {
+                        if (dataset === 'leaderboard') {
+                            const hasTeacherShape = result.some((row) => {
+                                return row && typeof row === 'object' && (
+                                    Object.prototype.hasOwnProperty.call(row, 'mode') ||
+                                    Object.prototype.hasOwnProperty.call(row, 'time') ||
+                                    Object.prototype.hasOwnProperty.call(row, 'timestamp')
+                                );
+                            });
+
+                            if (!hasTeacherShape) {
+                                const supported = await endpointSupportsTeacherActions(baseUrl);
+                                if (!supported) {
+                                    lastErrorMessage = '龍虎榜後端仍是舊版，尚未支援 teacherListLeaderboard。請在 GAS 重新部署最新版 Web App。';
+                                    continue;
+                                }
+                            }
+                        }
+                        return { rows: result, source: 'script' };
+                    }
+
+                    if (result.result === 'success' && Array.isArray(result.data)) {
+                        return { rows: result.data, source: 'script' };
+                    }
+
+                    // 打到錯的 GAS 時常見訊息: test doPost is running
+                    lastErrorMessage = result.message || '教師資料讀取失敗';
+                } catch (error) {
+                    lastErrorMessage = error.message || String(error);
+                }
+            }
+
+            throw new Error(lastErrorMessage || '教師資料讀取失敗，請確認 Apps Script 有支援教師後台 action。');
+        }
+
+        window.openTeacherAdmin = async () => {
+            if (!isTeacherLoggedIn) return;
+            document.getElementById('teacher-admin-modal').classList.add('active');
+            document.getElementById('teacher-dataset-select').value = teacherCurrentDataset;
+            await window.loadTeacherDataset();
+        };
+
+        window.closeTeacherAdmin = () => {
+            document.getElementById('teacher-admin-modal').classList.remove('active');
+        };
+
+        window.loadTeacherDataset = async () => {
+            if (!isTeacherLoggedIn) return;
+
+            const loading = document.getElementById('teacher-admin-loading');
+            teacherCurrentDataset = document.getElementById('teacher-dataset-select').value;
+            updateTeacherModeFilterState();
+
+            loading.style.display = 'block';
+            loading.innerText = '正在載入教師資料...';
+            setTeacherStatus('');
+
+            try {
+                const loaded = await fetchTeacherRows(teacherCurrentDataset);
+                const rows = loaded.rows;
+                teacherRowsCache[teacherCurrentDataset] = rows;
+                teacherCurrentPage = 1;
+                updateTeacherModeFilterOptions(rows);
+                updateTeacherModeFilterState();
+                renderTeacherTableByCurrentState();
+                const sourceText = loaded.source === 'sheet' ? '（直接來自試算表）' : '（來自 Apps Script）';
+                setTeacherStatus(`已載入 ${rows.length} 筆紀錄 ${sourceText}`);
+                loading.style.display = 'none';
+            } catch (error) {
+                console.error('教師後台讀取失敗', error);
+                renderTeacherTable([]);
+                loading.style.display = 'block';
+                loading.innerText = '載入失敗';
+                setTeacherStatus(error.message, true);
+            }
+        };
+
+        window.applyTeacherFilters = () => {
+            if (!isTeacherLoggedIn) return;
+            teacherCurrentPage = 1;
+            renderTeacherTableByCurrentState();
+        };
+
+        window.changeTeacherPage = (delta) => {
+            if (!isTeacherLoggedIn) return;
+            teacherCurrentPage += delta;
+            renderTeacherTableByCurrentState();
+        };
+
+        window.downloadTeacherCsv = () => {
+            if (!isTeacherLoggedIn) return;
+
+            const rows = teacherRowsCache[teacherCurrentDataset] || [];
+            if (!rows.length) {
+                setTeacherStatus('目前沒有可下載資料，請先載入表單。', true);
+                return;
+            }
+
+            const columns = Object.keys(rows[0]);
+            const csvLines = [columns.join(',')];
+
+            rows.forEach((row) => {
+                const line = columns.map((column) => escapeCsvValue(row[column])).join(',');
+                csvLines.push(line);
+            });
+
+            const csvContent = "\uFEFF" + csvLines.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const datasetName = teacherCurrentDataset === 'leaderboard' ? '龍虎榜' : '學生成績';
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+
+            link.href = URL.createObjectURL(blob);
+            link.download = `${datasetName}-${timestamp}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            setTeacherStatus(`已下載 ${datasetName} CSV。`);
+        };
+
+        window.openTeacherSheet = async () => {
+            if (!isTeacherLoggedIn) return;
+
+            // 先在使用者點擊事件當下開啟空白頁，避免瀏覽器阻擋彈出視窗。
+            const popupWindow = window.open('', '_blank');
+            if (popupWindow) {
+                popupWindow.document.write('<title>載入中...</title><p style="font-family: sans-serif; padding: 16px;">正在開啟試算表...</p>');
+            }
+
+            // 學生成績表單優先直接開固定試算表，避免受舊版 API 影響。
+            if (teacherCurrentDataset === 'test') {
+                if (popupWindow) {
+                    popupWindow.location.href = TEST_SHEET_DIRECT_URL;
+                } else {
+                    window.open(TEST_SHEET_DIRECT_URL, '_blank');
+                }
+                setTeacherStatus('已開啟學生成績表單。');
+                return;
+            }
+
+            try {
+                const authQuery = buildTeacherAuthQuery();
+                const candidateUrls = getTeacherApiCandidateUrls(teacherCurrentDataset);
+                let targetSheetUrl = '';
+                let lastErrorMessage = '';
+
+                for (const baseUrl of candidateUrls) {
+                    const url = `${baseUrl}?action=teacherGetSheetUrl&${authQuery}`;
+
+                    try {
+                        const response = await fetch(url);
+                        const raw = await response.text();
+
+                        let result;
+                        try {
+                            result = JSON.parse(raw);
+                        } catch (error) {
+                            lastErrorMessage = `無法解析資料：${raw.slice(0, 120)}`;
+                            continue;
+                        }
+
+                        if (!response.ok) {
+                            lastErrorMessage = result.message || `HTTP ${response.status}`;
+                            continue;
+                        }
+
+                        if (result && result.result === 'success' && result.url) {
+                            targetSheetUrl = result.url;
+                            break;
+                        }
+
+                        lastErrorMessage = result.message || '無法取得試算表網址';
+                    } catch (error) {
+                        lastErrorMessage = error.message || String(error);
+                    }
+                }
+
+                if (!targetSheetUrl) {
+                    throw new Error(lastErrorMessage || '無法取得試算表網址');
+                }
+
+                if (popupWindow) {
+                    popupWindow.location.href = targetSheetUrl;
+                } else {
+                    window.open(targetSheetUrl, '_blank');
+                }
+
+                setTeacherStatus('已開啟試算表。');
+            } catch (error) {
+                if (popupWindow && !popupWindow.closed) {
+                    popupWindow.close();
+                }
+                console.error('開啟試算表失敗', error);
+                setTeacherStatus(error.message || '開啟試算表失敗', true);
+            }
+        };
+
+        window.clearAllStudentScores = async () => {
+            if (!isTeacherLoggedIn) return;
+
+            if (!confirm('確定要清除整張「學生成績表單」嗎？此操作無法復原。')) {
+                return;
+            }
+
+            setTeacherStatus('正在清除整張學生成績表單...');
+
+            try {
+                const result = await postToAppScript(TEST_SCORE_APP_SCRIPT_URL, {
+                    action: 'clearAllTestScores',
+                    ...buildTeacherAuthPayload()
+                });
+
+                if (result.result === 'success') {
+                    teacherRowsCache.test = [];
+                    setTeacherStatus('已清除整張學生成績表單。');
+                    await window.loadTeacherDataset();
+                }
+            } catch (error) {
+                console.error('清除學生成績表單失敗', error);
+                setTeacherStatus(`清除失敗：${normalizeUploadError(error)}`, true);
+            }
+        };
+
+    </script>
+</body>
+</html>
