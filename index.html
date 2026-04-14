@@ -29,11 +29,15 @@
             background-size: 30px 30px;
             color: var(--text-main);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             position: relative;
+            padding: 16px 0 24px;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .container {
@@ -41,11 +45,12 @@
             border-radius: 30px;
             box-shadow: 0 15px 35px rgba(92, 77, 67, 0.1);
             padding: 30px 40px;
-            width: 90%;
+            width: min(850px, calc(100vw - 32px));
             max-width: 850px;
             text-align: center;
             border: 4px solid #ffffff;
             position: relative;
+            box-sizing: border-box;
         }
 
         .hidden { display: none !important; }
@@ -58,11 +63,15 @@
         }
 
         .student-badge {
-            position: absolute; top: 20px; left: 20px; background: #fff;
+            position: relative; top: auto; left: auto; background: #fff;
             padding: 8px 15px; border-radius: 20px; font-size: 16px;
             font-weight: bold; color: var(--text-main); border: 2px dashed var(--border-color);
             display: none; z-index: 10; align-items: center; gap: 10px; flex-wrap: wrap;
-            max-width: calc(100vw - 24px);
+            justify-content: center;
+            width: min(850px, calc(100vw - 32px));
+            max-width: calc(100vw - 32px);
+            margin: 0 auto 12px;
+            box-sizing: border-box;
         }
         .student-badge-text { display: inline-flex; align-items: center; gap: 4px; }
         .student-badge-meta {
@@ -137,7 +146,7 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         /* 高度調整為400px，進一步增加下落距離，降低難度 */
-        .display-card { width: 100%; height: 400px; border-radius: 24px; margin-bottom: 10px; background-color: #fcfdfe; border: 4px solid #eef1ec; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .display-card { width: 100%; height: clamp(260px, 52vh, 560px); border-radius: 24px; margin-bottom: 10px; background-color: #fcfdfe; border: 4px solid #eef1ec; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
         #image-display { object-fit: contain; padding: 15px; box-sizing: border-box; }
         #char-display { display: flex; justify-content: center; align-items: center; font-size: 140px; font-weight: 800; color: var(--text-main); background-image: linear-gradient(#f4f6f3 2px, transparent 2px); background-size: 100% 40px; background-position: 0 20px; }
         #char-display.custom-text-mode {
@@ -154,6 +163,22 @@
         
         #falling-container { position: relative; overflow: hidden; background-image: linear-gradient(#f4f6f3 2px, transparent 2px); background-size: 100% 40px; }
         .falling-letter { position: absolute; font-size: 80px; font-weight: 800; color: var(--text-main); text-shadow: 3px 3px 0px rgba(202, 218, 200, 0.6); width: 80px; height: 80px; text-align: center; line-height: 80px; transform: translateX(-50%); }
+        .falling-letter.falling-image-mode {
+            width: 96px;
+            height: 96px;
+            line-height: normal;
+            text-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .falling-image {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            user-select: none;
+            pointer-events: none;
+        }
 
         /* ======== 虛擬鍵盤與動態雙手樣式 (縮小40%版) ======== */
         .keyboard-container {
@@ -280,6 +305,52 @@
         .error-message { color: var(--danger-color); font-weight: bold; margin-bottom: 15px; min-height: 24px; }
 
         .leaderboard-modal { max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; }
+        #leaderboard-modal {
+            align-items: stretch;
+            justify-content: stretch;
+        }
+        #leaderboard-modal .leaderboard-modal {
+            width: 100vw;
+            max-width: none;
+            height: 100vh;
+            max-height: none;
+            border-radius: 0;
+            border-width: 0;
+            box-shadow: none;
+            padding: 24px 28px;
+        }
+        #leaderboard-modal .table-container {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+        }
+        #teacher-admin-modal {
+            align-items: stretch;
+            justify-content: stretch;
+        }
+        #teacher-admin-modal .teacher-admin-modal {
+            width: 100vw;
+            max-width: none;
+            height: 100vh;
+            max-height: none;
+            border-radius: 0;
+            border-width: 0;
+            box-shadow: none;
+            padding: 16px 20px;
+        }
+        #teacher-admin-modal .table-container {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+        }
+        @supports (height: 100dvh) {
+            #leaderboard-modal .leaderboard-modal {
+                height: 100dvh;
+            }
+            #teacher-admin-modal .teacher-admin-modal {
+                height: 100dvh;
+            }
+        }
         .leaderboard-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .table-container { overflow-y: auto; max-height: 50vh; border-radius: 15px; border: 2px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; text-align: center; }
@@ -294,15 +365,11 @@
         .btn-close:hover { color: var(--danger-color); }
         .score-highlight { font-size: 64px; color: var(--success-color); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 0px rgba(114, 176, 118, 0.2); }
         .teacher-admin-modal { max-width: 760px; }
-        .teacher-toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+        .teacher-toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
         .teacher-toolbar select { margin-left: 0; }
-        .teacher-status { font-size: 14px; font-weight: bold; color: var(--text-light); margin: 8px 0 12px; min-height: 20px; }
-        .teacher-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .teacher-status { font-size: 14px; font-weight: bold; color: var(--text-light); margin: 4px 0 8px; min-height: 20px; }
+        .teacher-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
         .teacher-page-info { font-size: 14px; font-weight: bold; color: var(--text-light); min-width: 190px; text-align: center; }
-        .teacher-actions { margin-top: 14px; padding: 14px; border-radius: 14px; background: #f4f6f3; border: 2px dashed var(--border-color); }
-        .teacher-actions h3 { margin: 0 0 10px; font-size: 20px; }
-        .teacher-actions .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
-        .teacher-actions input { width: 200px; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border-color); font-size: 16px; font-weight: bold; text-transform: uppercase; }
         .btn-danger { background-color: #ef9a9a; color: #fff; border: none; padding: 12px 18px; font-size: 16px; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 4px 0px rgba(0,0,0,0.1); }
         .btn-danger:active { transform: translateY(3px); box-shadow: 0 1px 0px rgba(0,0,0,0.1); }
         .chinese-menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; justify-items: center; }
@@ -317,6 +384,155 @@
             max-width: none;
             justify-self: center;
             padding: 12px 32px;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                align-items: flex-start;
+                padding: 12px 0 20px;
+            }
+            .container {
+                width: calc(100% - 24px);
+                padding: 24px 20px;
+                border-radius: 24px;
+                margin: 0 auto;
+            }
+            .display-card {
+                height: 46vh;
+                min-height: 320px;
+            }
+            .teacher-toolbar > * {
+                flex: 1 1 220px;
+            }
+            .table-container {
+                overflow-x: auto;
+            }
+            #teacher-admin-table {
+                min-width: 760px;
+            }
+            #leaderboard-table {
+                min-width: 420px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+            .student-badge {
+                position: static;
+                margin: 8px auto 12px;
+                width: calc(100% - 16px);
+                max-width: calc(100vw - 16px);
+                justify-content: center;
+            }
+            .author-signature {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 28px;
+                letter-spacing: 1px;
+            }
+            .controls-wrapper,
+            .status-bar,
+            .teacher-toolbar,
+            .teacher-pagination,
+            .leaderboard-controls {
+                gap: 8px;
+            }
+            .settings-group,
+            .btn-leaderboard,
+            .btn-primary,
+            .btn-danger,
+            .teacher-toolbar select,
+            .teacher-toolbar button,
+            .leaderboard-controls select {
+                width: 100%;
+                margin-left: 0;
+            }
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            .status-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 10px 12px;
+                font-size: 18px;
+            }
+            .status-box {
+                padding: 5px 12px;
+            }
+            .display-card {
+                height: 38vh;
+                min-height: 240px;
+            }
+            #char-display {
+                font-size: 96px;
+            }
+            #char-display.custom-text-mode {
+                font-size: 28px;
+                padding: 18px;
+            }
+            .chinese-ime-input {
+                width: 100%;
+                max-width: none;
+                box-sizing: border-box;
+            }
+            .modal-overlay {
+                padding: 12px;
+                box-sizing: border-box;
+            }
+            .modal-content {
+                width: 100%;
+                max-height: calc(100vh - 24px);
+                padding: 24px 18px;
+                overflow-y: auto;
+                box-sizing: border-box;
+            }
+            #leaderboard-modal .leaderboard-modal,
+            #teacher-admin-modal .teacher-admin-modal {
+                padding: 16px 12px;
+            }
+            .btn-close {
+                top: 10px;
+                right: 12px;
+            }
+            .teacher-page-info {
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: calc(100% - 12px);
+                padding: 18px 12px;
+                border-radius: 18px;
+            }
+            .student-badge {
+                padding: 6px 8px;
+                border-radius: 16px;
+            }
+            .student-badge-text,
+            .student-badge-meta {
+                width: 100%;
+                justify-content: center;
+            }
+            .login-input,
+            select,
+            .settings-group {
+                font-size: 16px;
+            }
+            .display-card {
+                height: 34vh;
+                min-height: 200px;
+            }
+            #char-display {
+                font-size: 72px;
+            }
         }
 
     </style>
@@ -543,7 +759,7 @@
     <div class="modal-overlay" id="teacher-admin-modal">
         <div class="modal-content leaderboard-modal teacher-admin-modal">
             <button class="btn-close" onclick="closeTeacherAdmin()">×</button>
-            <h1 style="margin-bottom: 10px;">🧑‍🏫 教師後台</h1>
+            <h1 style="margin-bottom: 6px;">🧑‍🏫 教師後台</h1>
 
             <div class="teacher-toolbar">
                 <select id="teacher-dataset-select" onchange="loadTeacherDataset()">
@@ -553,10 +769,15 @@
                 <select id="teacher-mode-filter" onchange="applyTeacherFilters()">
                     <option value="__ALL__">全部模式</option>
                 </select>
+                <select id="teacher-game-flow-select" onchange="onTeacherGameFlowChange()">
+                    <option value="normal">遊戲流程：原模式（預設）</option>
+                    <option value="falling_non_chinese">遊戲流程：由上而下（不含中文打字）</option>
+                </select>
                 <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="loadTeacherDataset()">重新載入</button>
                 <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="downloadTeacherCsv()">下載 CSV</button>
                 <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="openTeacherSheet()">開啟試算表</button>
                 <button class="btn-primary" style="font-size:16px; padding: 10px 18px;" onclick="triggerCustomTextUpload()">上傳自訂打字</button>
+                <button class="btn-danger" onclick="clearAllStudentScores()">一鍵清除整張表單</button>
                 <input type="file" id="custom-text-upload" class="hidden" accept=".txt,text/plain">
             </div>
 
@@ -577,14 +798,6 @@
                     <tbody id="teacher-admin-body"></tbody>
                 </table>
                 <div id="teacher-admin-loading" style="padding: 20px; font-weight: bold; color: var(--text-light);">載入中...</div>
-            </div>
-
-            <div class="teacher-actions">
-                <h3>清除學生成績表單</h3>
-                <div class="controls">
-                    <button class="btn-danger" onclick="clearAllStudentScores()">一鍵清除整張表單</button>
-                </div>
-                <div style="font-size: 13px; color: var(--text-light); margin-top: 8px;"></div>
             </div>
         </div>
     </div>
@@ -612,6 +825,7 @@
         const TEACHER_PAGE_SIZE_DEFAULT = 100;
         const TEACHER_PAGE_SIZE_TEST = 40;
         const CUSTOM_TEXT_STORAGE_KEY = 'customTypingTextLinesV1';
+        const TEACHER_GAME_FLOW_KEY = 'teacherGameFlowModeV1';
         const TEST_SHEET_DIRECT_URL = 'https://docs.google.com/spreadsheets/d/1CbxS10NTF3Q7XQH37Z_Ji8Hh6u8kyyKtUqxwOWuCdUE/edit?gid=1930190967#gid=1930190967';
         // ==========================================
 
@@ -662,15 +876,38 @@
             return '';
         }
 
+        function buildWeightedLetterPool(letters) {
+            const pool = [];
+            (letters || []).forEach((letter) => {
+                const repeat = Math.max(1, Number(counts[letter] || 1));
+                for (let i = 0; i < repeat; i++) {
+                    pool.push(letter);
+                }
+            });
+            return pool;
+        }
+
+        function buildWeightedImagePool(letters) {
+            const pool = [];
+            (letters || []).forEach((letter) => {
+                const limit = Math.max(1, Number(counts[letter] || 1));
+                const folder = getFolderName(letter);
+                for (let i = 1; i <= limit; i++) {
+                    pool.push({ key: letter, index: i, folder: folder });
+                }
+            });
+            return pool;
+        }
+
         const categoryMap = {
-            'cangjie':    { title: '倉頡碼字根', isTextMode: true },
-            'philosophy': { title: '哲理類 (A-G)',     letters: getLetters('a', 'g') },
-            'strokes':    { title: '筆劃類 (H-N)',     letters: getLetters('h', 'n') },
-            'body':       { title: '人身類 (O-R)',     letters: getLetters('o', 'r') },
-            'fonts':      { title: '字型類 (S-Y)',     letters: getLetters('s', 'y') },
-            'ph_st':      { title: '哲理+筆劃 (A-N)', letters: getLetters('a', 'n') },
-            'bo_fo':      { title: '人身+字型 (O-Y)', letters: getLetters('o', 'y') },
-            'all':        { title: '全輔助 (A-Z)',     letters: getLetters('a', 'z') },
+            'cangjie':    { title: '倉頡碼字根', isTextMode: true, fallingLetters: cangjieMap.map((item) => ({ char: item.char, key: item.key })) },
+            'philosophy': { title: '哲理類 (A-G)',     letters: getLetters('a', 'g'), fallingLetters: buildWeightedImagePool(getLetters('a', 'g')) },
+            'strokes':    { title: '筆劃類 (H-N)',     letters: getLetters('h', 'n'), fallingLetters: buildWeightedImagePool(getLetters('h', 'n')) },
+            'body':       { title: '人身類 (O-R)',     letters: getLetters('o', 'r'), fallingLetters: buildWeightedImagePool(getLetters('o', 'r')) },
+            'fonts':      { title: '字型類 (S-Y)',     letters: getLetters('s', 'y'), fallingLetters: buildWeightedImagePool(getLetters('s', 'y')) },
+            'ph_st':      { title: '哲理+筆劃 (A-N)', letters: getLetters('a', 'n'), fallingLetters: buildWeightedImagePool(getLetters('a', 'n')) },
+            'bo_fo':      { title: '人身+字型 (O-Y)', letters: getLetters('o', 'y'), fallingLetters: buildWeightedImagePool(getLetters('o', 'y')) },
+            'all':        { title: '全輔助 (A-Z)',     letters: getLetters('a', 'z'), fallingLetters: buildWeightedImagePool(getLetters('a', 'z')) },
             'english':    { title: '英文打字 (A-Z)',   letters: getLetters('a', 'z'), isFallingMode: true },
             'chinese_twochar': { title: '中文打字 - 兩碼字', isTextMode: true, acceptAnyInput: true, words: chineseTwoCharPool },
             'chinese_custom': { title: '中文打字-自訂打字', isTextMode: true, acceptAnyInput: true }
@@ -692,6 +929,7 @@
         
         let currentModeIsText = false;
         let currentModeIsFalling = false;
+        let currentShowKeyboardGuide = false;
         let currentModeAcceptAnyInput = false;
         let currentModeIsCustomText = false;
         let isImeComposing = false;
@@ -705,6 +943,7 @@
         let teacherCurrentDataset = 'leaderboard';
         let teacherRowsCache = { leaderboard: [], test: [] };
         let teacherCurrentPage = 1;
+        let teacherGameFlowMode = 'normal';
         let customTypingLines = [];
         let customTypingCharPool = [];
 
@@ -761,6 +1000,30 @@
             customTypingCharPool = buildCustomCharPool(lines);
             localStorage.setItem(CUSTOM_TEXT_STORAGE_KEY, JSON.stringify(lines));
         }
+
+        function loadTeacherGameFlowMode() {
+            const raw = String(localStorage.getItem(TEACHER_GAME_FLOW_KEY) || '').trim();
+            teacherGameFlowMode = raw === 'falling_non_chinese' ? 'falling_non_chinese' : 'normal';
+        }
+
+        function syncTeacherGameFlowSelect() {
+            const select = document.getElementById('teacher-game-flow-select');
+            if (!select) return;
+            select.value = teacherGameFlowMode;
+        }
+
+        window.onTeacherGameFlowChange = () => {
+            const select = document.getElementById('teacher-game-flow-select');
+            const nextMode = select && select.value === 'falling_non_chinese' ? 'falling_non_chinese' : 'normal';
+            teacherGameFlowMode = nextMode;
+            localStorage.setItem(TEACHER_GAME_FLOW_KEY, teacherGameFlowMode);
+            syncTeacherGameFlowSelect();
+
+            const modeText = teacherGameFlowMode === 'falling_non_chinese'
+                ? '已切換為「由上而下」（中文打字維持原模式）'
+                : '已切換為「原模式」';
+            setTeacherStatus(modeText);
+        };
 
 
         function isPlaceholderUrl(url) {
@@ -887,12 +1150,18 @@
         }
 
         // ================= 登入驗證 =================
-        window.onload = async () => {
-            await loadBackendConfig();
+        document.addEventListener('DOMContentLoaded', () => {
             loadCustomTypingLines();
+            loadTeacherGameFlowMode();
+            syncTeacherGameFlowSelect();
             document.getElementById('login-modal').classList.add('active');
             document.getElementById('student-id-input').focus();
-        };
+
+            // 背景載入後端設定，避免阻塞登入彈窗出現
+            loadBackendConfig().catch((error) => {
+                console.warn('後端設定載入失敗，使用預設網址繼續。', error);
+            });
+        });
 
         document.getElementById('student-id-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') window.verifyLogin();
@@ -983,7 +1252,7 @@
                     teacherAuthPassword = password;
                     studentId = username;
                     document.getElementById('display-student-id').innerText = '*****';
-                    document.getElementById('student-badge').style.display = 'block';
+                    document.getElementById('student-badge').style.display = 'flex';
                     teacherButton.classList.remove('hidden');
                     document.getElementById('login-modal').classList.remove('active');
                     document.getElementById('teacher-password-input').value = '';
@@ -1002,7 +1271,7 @@
                 isTeacherLoggedIn = false;
                 studentId = input;
                 document.getElementById('display-student-id').innerText = studentId;
-                document.getElementById('student-badge').style.display = 'block';
+                document.getElementById('student-badge').style.display = 'flex';
                 updateStudentBadgeMeta();
                 teacherButton.classList.add('hidden');
                 document.getElementById('login-modal').classList.remove('active');
@@ -1062,8 +1331,12 @@
             const fallingEl = document.getElementById('the-falling-letter');
             fallingEl.style.top = fallingY + 'px';
 
-            // 掉到底部邊界判定 (掉落框高400px，字母約80px，所以底線是320)
-            if (fallingY > 320) {
+            const fallingContainer = document.getElementById('falling-container');
+            const elementHeight = fallingEl.offsetHeight || 80;
+            const bottomLine = Math.max(0, (fallingContainer ? fallingContainer.clientHeight : 400) - elementHeight);
+
+            // 掉到底部邊界判定
+            if (fallingY > bottomLine) {
                 currentScore -= 1; // 掉到地上只扣 1 分
                 document.getElementById('score').innerText = currentScore;
                 
@@ -1085,9 +1358,14 @@
             currentPracticeMode = document.getElementById('practice-mode-select').value;
             
             const category = categoryMap[categoryId];
-            currentModeIsText = category.isTextMode === true;
-            currentModeIsFalling = category.isFallingMode === true;
-            currentModeAcceptAnyInput = category.acceptAnyInput === true;
+            const isChineseTypingCategory = categoryId === 'chinese_twochar' || categoryId === 'chinese_custom';
+            const shouldForceFalling = teacherGameFlowMode === 'falling_non_chinese' && !isChineseTypingCategory;
+            const useEnglishNormalMode = categoryId === 'english' && !shouldForceFalling;
+
+            currentModeIsFalling = useEnglishNormalMode ? false : (shouldForceFalling || category.isFallingMode === true);
+            currentShowKeyboardGuide = currentModeIsFalling && categoryId === 'english';
+            currentModeIsText = (category.isTextMode === true || useEnglishNormalMode) && !currentModeIsFalling;
+            currentModeAcceptAnyInput = category.acceptAnyInput === true && !currentModeIsFalling;
             currentModeIsCustomText = categoryId === 'chinese_custom';
             currentImageList = [];
 
@@ -1099,14 +1377,33 @@
             document.getElementById('keyboard-layout').classList.add('hidden');
 
             if (currentModeIsFalling) {
-                currentImageList = category.letters; 
-                document.getElementById('hint-text').innerText = `💡 參考下方亮起的鍵盤與雙手，按出正確字母`;
-                document.getElementById('falling-container').classList.remove('hidden');
-                document.getElementById('keyboard-layout').classList.remove('hidden'); // 顯示動態雙手鍵盤
-            } else if (currentModeIsText) {
+                const fallingLetters = category.fallingLetters || category.letters;
+
+                if (Array.isArray(fallingLetters) && fallingLetters.length) {
+                    currentImageList = fallingLetters;
+                    document.getElementById('hint-text').innerText = currentShowKeyboardGuide
+                        ? `💡 參考下方亮起的鍵盤與雙手，按出正確字母`
+                        : `💡 請輸入落下題目對應的英文字母`;
+                    document.getElementById('falling-container').classList.remove('hidden');
+                    if (currentShowKeyboardGuide) {
+                        document.getElementById('keyboard-layout').classList.remove('hidden'); // 只在英文打字顯示動態雙手鍵盤
+                    }
+                } else {
+                    currentModeIsFalling = false;
+                    currentShowKeyboardGuide = false;
+                    currentModeIsText = category.isTextMode === true;
+                    currentModeAcceptAnyInput = category.acceptAnyInput === true;
+                }
+            }
+
+            if (!currentModeIsFalling && currentModeIsText) {
+                if (categoryId === 'english') {
+                    currentImageList = category.letters.map((letter) => ({ char: letter.toUpperCase(), key: letter }));
+                    document.getElementById('hint-text').innerText = `💡 請輸入上方顯示的英文字母`;
+                } else 
                 if (categoryId === 'chinese_twochar') {
                     currentImageList = category.words.map(item => ({ char: item, key: item }));
-                    document.getElementById('hint-text').innerText = `💡 請用倉頡/速成/拼音輸入上方中文字（答對+1，答錯-2）`;
+                    document.getElementById('hint-text').innerText = `💡 請用倉頡/速成/拼音輸入上方中文字（答對+1，答錯-1）`;
                 } else if (categoryId === 'chinese_custom') {
                     loadCustomTypingLines();
                     if (!customTypingCharPool.length) {
@@ -1121,7 +1418,7 @@
                     document.getElementById('hint-text').innerText = `💡 請輸入上方字根對應的英文字母`;
                 }
                 document.getElementById('char-display').classList.remove('hidden');
-            } else {
+            } else if (!currentModeIsFalling) {
                 const currentValidLetters = category.letters;
                 currentValidLetters.forEach(letter => {
                     const limit = counts[letter];
@@ -1183,25 +1480,54 @@
             document.querySelectorAll('.active-finger').forEach(el => el.classList.remove('active-finger'));
 
             if (currentModeIsFalling) {
-                const letters = categoryMap['english'].letters;
-                currentTargetKey = letters[Math.floor(Math.random() * letters.length)];
+                const randomItem = currentImageList[Math.floor(Math.random() * currentImageList.length)];
+                const targetKey = typeof randomItem === 'string'
+                    ? randomItem
+                    : String((randomItem && randomItem.key) || '').trim().toLowerCase();
+                const displayChar = typeof randomItem === 'string'
+                    ? randomItem.toUpperCase()
+                    : String((randomItem && randomItem.char) || targetKey.toUpperCase());
+                const isImageItem = !!(randomItem && typeof randomItem === 'object' && randomItem.folder && randomItem.index);
+
+                if (!targetKey) return;
+
+                currentTargetKey = targetKey;
                 fallingY = 0; 
                 
                 const fallingEl = document.getElementById('the-falling-letter');
-                fallingEl.innerText = currentTargetKey.toUpperCase();
+                fallingEl.classList.remove('falling-image-mode');
+                fallingEl.innerHTML = '';
+
+                if (isImageItem) {
+                    const imageEl = document.createElement('img');
+                    imageEl.className = 'falling-image';
+                    imageEl.src = `PIC/${randomItem.folder}/${randomItem.key} (${randomItem.index}).png`;
+                    imageEl.alt = `${targetKey.toUpperCase()}`;
+                    imageEl.onerror = () => {
+                        fallingEl.classList.remove('falling-image-mode');
+                        fallingEl.textContent = targetKey.toUpperCase();
+                    };
+                    fallingEl.classList.add('falling-image-mode');
+                    fallingEl.appendChild(imageEl);
+                } else {
+                    fallingEl.textContent = displayChar;
+                }
                 fallingEl.style.left = Math.floor(Math.random() * 80 + 10) + '%'; 
                 fallingEl.style.top = fallingY + 'px';
                 currentErrorCount = 0;
 
                 // 1. 讓虛擬鍵盤對應按鍵發亮
-                const targetKeyElement = document.getElementById('key-' + currentTargetKey.toLowerCase());
-                if(targetKeyElement) targetKeyElement.classList.add('active-key');
+                if (currentShowKeyboardGuide) {
+                    // 1. 讓虛擬鍵盤對應按鍵發亮
+                    const targetKeyElement = document.getElementById('key-' + currentTargetKey.toLowerCase());
+                    if(targetKeyElement) targetKeyElement.classList.add('active-key');
 
-                // 2. 讓對應的手指發亮
-                const fingerId = fingerMapping[currentTargetKey.toLowerCase()];
-                if(fingerId) {
-                    const targetFingerElement = document.getElementById('finger-' + fingerId);
-                    if(targetFingerElement) targetFingerElement.classList.add('active-finger');
+                    // 2. 讓對應的手指發亮
+                    const fingerId = fingerMapping[currentTargetKey.toLowerCase()];
+                    if(fingerId) {
+                        const targetFingerElement = document.getElementById('finger-' + fingerId);
+                        if(targetFingerElement) targetFingerElement.classList.add('active-finger');
+                    }
                 }
 
             } else {
@@ -1242,17 +1568,17 @@
                     feedbackElement.classList.add('correct');
                     nextImage();
                 } else {
-                    currentScore -= 2;
+                    currentScore -= 1;
                     currentAnyInputErrorCount += 1;
                     if (currentAnyInputErrorCount >= 3) {
-                        feedbackElement.innerText = "💦 錯滿 3 次，自動換下一題 (-2)";
+                        feedbackElement.innerText = "💦 錯滿 3 次，自動換下一題 (-1)";
                         currentAnyInputErrorCount = 0;
                         feedbackElement.classList.add('wrong');
                         document.getElementById('score').innerText = currentScore;
                         nextImage();
                         return;
                     }
-                    feedbackElement.innerText = `💦 錯了！ (-2) (已錯 ${currentAnyInputErrorCount}/3 次)`;
+                    feedbackElement.innerText = `💦 錯了！ (-1) (已錯 ${currentAnyInputErrorCount}/3 次)`;
                     feedbackElement.classList.add('wrong');
                 }
 
@@ -1266,15 +1592,15 @@
                 feedbackElement.classList.add('correct');
                 nextImage(); 
             } else {
-                currentScore -= 2;
+                currentScore -= 1;
                 currentErrorCount += 1;
                 
                 if (currentErrorCount >= 3) {
-                    feedbackElement.innerText = "💦 錯滿 3 次，自動跳過 (-2)";
+                    feedbackElement.innerText = "💦 錯滿 3 次，自動跳過 (-1)";
                     feedbackElement.classList.add('wrong');
                     nextImage(); 
                 } else {
-                    feedbackElement.innerText = `💦 哎呀，錯了 (-2) (已錯 ${currentErrorCount}/3 次)`;
+                    feedbackElement.innerText = `💦 哎呀，錯了 (-1) (已錯 ${currentErrorCount}/3 次)`;
                     feedbackElement.classList.add('wrong');
                 }
             }
@@ -1648,6 +1974,7 @@
 
         function setTeacherStatus(message, isError = false) {
             const statusEl = document.getElementById('teacher-admin-status');
+            statusEl.style.display = message ? 'block' : 'none';
             statusEl.style.color = isError ? 'var(--danger-color)' : 'var(--text-light)';
             statusEl.innerText = message;
         }
@@ -1679,6 +2006,36 @@
             });
         }
 
+        function formatDateTimeForDisplay(value) {
+            if (value === null || value === undefined || value === '') return value;
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mi = String(date.getMinutes()).padStart(2, '0');
+            const ss = String(date.getSeconds()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+        }
+
+        function formatCellDisplayValue(column, value) {
+            const columnName = String(column || '').trim();
+            const isDateColumn = /timestamp|time\s*stamp|date|datetime|建立時間|更新時間|日期/i.test(columnName);
+
+            if (isDateColumn) {
+                return formatDateTimeForDisplay(value);
+            }
+
+            return value;
+        }
+
+        function getTeacherVisibleColumns(row) {
+            return Object.keys(row || {}).filter((column) => !/^(timestamp|time\s*stamp)$/i.test(String(column).trim()));
+        }
+
         function renderTeacherTable(rows) {
             const head = document.getElementById('teacher-admin-head');
             const body = document.getElementById('teacher-admin-body');
@@ -1692,7 +2049,7 @@
                 return;
             }
 
-            const columns = Object.keys(rows[0]);
+            const columns = getTeacherVisibleColumns(rows[0]);
             columns.forEach((column) => {
                 const th = document.createElement('th');
                 th.innerText = column;
@@ -1703,7 +2060,7 @@
                 const tr = document.createElement('tr');
                 columns.forEach((column) => {
                     const td = document.createElement('td');
-                    td.innerText = row[column] ?? '';
+                    td.innerText = formatCellDisplayValue(column, row[column]) ?? '';
                     tr.appendChild(td);
                 });
                 body.appendChild(tr);
@@ -1892,6 +2249,7 @@
             if (!isTeacherLoggedIn) return;
             document.getElementById('teacher-admin-modal').classList.add('active');
             document.getElementById('teacher-dataset-select').value = teacherCurrentDataset;
+            syncTeacherGameFlowSelect();
             await window.loadTeacherDataset();
         };
 
@@ -1918,8 +2276,7 @@
                 updateTeacherModeFilterOptions(rows);
                 updateTeacherModeFilterState();
                 renderTeacherTableByCurrentState();
-                const sourceText = loaded.source === 'sheet' ? '（直接來自試算表）' : '（來自 Apps Script）';
-                setTeacherStatus(`已載入 ${rows.length} 筆紀錄 ${sourceText}`);
+                setTeacherStatus('');
                 loading.style.display = 'none';
             } catch (error) {
                 console.error('教師後台讀取失敗', error);
