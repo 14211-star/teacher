@@ -958,7 +958,7 @@
             <h1 style="margin-bottom: 10px;">🏆 勞校龍虎榜</h1>
             
             <div class="leaderboard-controls">
-                <select id="lb-mode-select" onchange="loadLeaderboard()">
+                <select id="lb-mode-select" onchange="onLeaderboardModeChange()">
                     <option value="倉頡碼字根">倉頡碼字根</option>
                     <option value="哲理類 (A-G)">哲理類 (A-G)</option>
                     <option value="筆劃類 (H-N)">筆劃類 (H-N)</option>
@@ -1507,6 +1507,7 @@
         let customArticleLines = [];
         let badgeModeOverride = '';
         let badgeTimeOverride = '';
+        let leaderboardLoadRequestSeq = 0;
 
         const APP_SCRIPT_URL_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/;
         const APP_SCRIPT_TIMEOUT_MS = 12000;
@@ -1861,28 +1862,71 @@
         }
 
         async function authenticateTeacherLogin(teacherAccount, teacherPassword) {
+            const normalizedAccount = String(teacherAccount || '').trim().toUpperCase();
+            const normalizedPassword = String(teacherPassword || '').trim();
+
+            if (!normalizedAccount || !normalizedPassword) {
+                throw new Error('請輸入老師帳號及密碼');
+            }
+
             const endpoints = [TEST_SCORE_APP_SCRIPT_URL, LEADERBOARD_APP_SCRIPT_URL]
-                .filter((url, index, arr) => !!url && arr.indexOf(url) === index);
+                .filter((url, index, arr) => !!url && arr.indexOf(url) === index && isValidAppScriptExecUrl(url));
+
+            if (!endpoints.length) {
+                throw new Error('老師登入服務未設定完成，請聯絡管理員。');
+            }
 
             let lastError = null;
+            let authPassed = false;
 
+            // 第一步：帳密驗證
             for (const endpoint of endpoints) {
                 try {
-                    const query = `action=teacherAuth&teacherAccount=${encodeURIComponent(teacherAccount)}&teacherPassword=${encodeURIComponent(teacherPassword)}`;
+                    const query = `action=teacherAuth&teacherAccount=${encodeURIComponent(normalizedAccount)}&teacherPassword=${encodeURIComponent(normalizedPassword)}`;
                     const authUrl = `${endpoint}?${query}`;
                     const response = await fetch(authUrl);
-                    const result = await response.json();
+                    const raw = await response.text();
+                    const result = JSON.parse(raw);
 
                     if (!response.ok) {
                         lastError = new Error(result.message || `HTTP ${response.status}`);
                         continue;
                     }
 
-                    if (result.result === 'success') {
+                    if (result && result.result === 'success') {
+                        authPassed = true;
+                        break;
+                    }
+
+                    lastError = new Error((result && result.message) || '老師帳號或密碼錯誤');
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            if (!authPassed) {
+                throw lastError || new Error('老師帳號或密碼錯誤');
+            }
+
+            // 第二步：權限驗證（避免錯誤端點或舊版腳本誤回成功）
+            for (const endpoint of endpoints) {
+                try {
+                    const query = `action=teacherGetSheetUrl&teacherAccount=${encodeURIComponent(normalizedAccount)}&teacherPassword=${encodeURIComponent(normalizedPassword)}`;
+                    const verifyUrl = `${endpoint}?${query}`;
+                    const response = await fetch(verifyUrl);
+                    const raw = await response.text();
+                    const result = JSON.parse(raw);
+
+                    if (!response.ok) {
+                        lastError = new Error(result.message || `HTTP ${response.status}`);
+                        continue;
+                    }
+
+                    if (result && result.result === 'success' && result.url) {
                         return true;
                     }
 
-                    lastError = new Error(result.message || '老師帳號或密碼錯誤');
+                    lastError = new Error((result && result.message) || '老師帳號或密碼錯誤');
                 } catch (error) {
                     lastError = error;
                 }
@@ -2631,12 +2675,52 @@
         };
 
         // ================= Google 表格連線：讀取龍虎榜 =================
+        function isLeaderboardLongTimeMode(modeTitle) {
+            return modeTitle === '中文打字-勞校校規'
+                || modeTitle === '中文打字-自訂文章'
+                || modeTitle === '中文打字-自訂打字';
+        }
+
+        function syncLeaderboardTimeOptions(preferredTime) {
+            const modeSelect = document.getElementById('lb-mode-select');
+            const timeSelect = document.getElementById('lb-time-select');
+            if (!modeSelect || !timeSelect) return;
+
+            const targetMode = modeSelect.value;
+            const longTimeMode = isLeaderboardLongTimeMode(targetMode);
+            const options = longTimeMode
+                ? [
+                    { value: '300', label: '5 分鐘' },
+                    { value: '600', label: '10 分鐘' }
+                ]
+                : [
+                    { value: '180', label: '3 分鐘' },
+                    { value: '300', label: '5 分鐘' }
+                ];
+
+            const previousValue = String(preferredTime || timeSelect.value || '');
+            timeSelect.innerHTML = options
+                .map((item) => `<option value="${item.value}">${item.label}</option>`)
+                .join('');
+
+            const fallbackValue = options[0].value;
+            const matchedValue = options.some((item) => item.value === previousValue)
+                ? previousValue
+                : fallbackValue;
+            timeSelect.value = matchedValue;
+        }
+
+        window.onLeaderboardModeChange = () => {
+            syncLeaderboardTimeOptions();
+            window.loadLeaderboard();
+        };
+
         window.openLeaderboard = () => {
             document.getElementById('leaderboard-modal').classList.add('active');
-            const preferredTime = (currentModeId === 'chinese_school_rules' || currentModeId === 'chinese_custom_article')
+            const preferredTime = (currentModeId === 'chinese_school_rules' || currentModeId === 'chinese_custom_article' || currentModeId === 'chinese_custom')
                 ? String(selectedTime)
                 : document.getElementById('time-select').value;
-            document.getElementById('lb-time-select').value = preferredTime;
+            syncLeaderboardTimeOptions(preferredTime);
             window.loadLeaderboard();
         };
 
@@ -2645,6 +2729,7 @@
         };
 
         window.loadLeaderboard = async () => {
+            const requestSeq = ++leaderboardLoadRequestSeq;
             const tableBody = document.getElementById('leaderboard-body');
             const loading = document.getElementById('lb-loading');
             
@@ -2694,6 +2779,11 @@
                     hasLoaded = true;
                 }
 
+                // 只允許最新一次查詢更新畫面，避免非同步競態造成重複排名。
+                if (requestSeq !== leaderboardLoadRequestSeq) {
+                    return;
+                }
+
                 loading.style.display = "none";
 
                 if (!hasLoaded) {
@@ -2724,6 +2814,9 @@
                 });
 
             } catch (error) {
+                if (requestSeq !== leaderboardLoadRequestSeq) {
+                    return;
+                }
                 console.error("讀取排行榜失敗", error);
                 loading.innerText = "無法載入排行榜，請稍後再試或檢查網址。";
             }
